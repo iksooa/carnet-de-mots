@@ -1,0 +1,915 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Carnet">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F5F6F8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1117" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>Carnet de mots</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&display=swap">
+<style>
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+/* Layout: one phone-width column, sticky glass header, fixed glass tab bar; sessions take over the column. */
+:root {
+  --bg: #F5F6F8;
+  --surface: #FFFFFF;
+  --ink: #18213A;
+  --ink-2: #566079;
+  --ink-3: #8790A4;
+  --line: rgba(24, 33, 58, .16);
+  --line-strong: rgba(24, 33, 58, .28);
+  --mustard: #C9971A;
+  --mustard-ink: #835F05;
+  --mustard-soft: #F6EBCB;
+  --masc: #2F5FA8;
+  --fem: #B23D48;
+  --ok: #2B7A50;
+  --ok-soft: #E2F1E8;
+  --bad: #B23D48;
+  --bad-soft: #F7E3E5;
+  --glass: rgba(255, 255, 255, .74);
+  --shadow: 0 1px 2px rgba(24, 33, 58, .05), 0 8px 24px rgba(24, 33, 58, .06);
+  --f-fr: "Newsreader", "Iowan Old Style", "Times New Roman", serif;
+  --f-ui: "IBM Plex Sans KR", -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --hair: .5px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1117; --surface: #171B24; --ink: #E8EBF2; --ink-2: #A3ABBD; --ink-3: #6F788C;
+    --line: rgba(232, 235, 242, .16); --line-strong: rgba(232, 235, 242, .3);
+    --mustard: #E0AE34; --mustard-ink: #EBC566; --mustard-soft: rgba(224, 174, 52, .15);
+    --masc: #86A9E8; --fem: #E68C95; --ok: #62BE8B; --ok-soft: rgba(98, 190, 139, .14);
+    --bad: #E68C95; --bad-soft: rgba(230, 140, 149, .14); --glass: rgba(23, 27, 36, .74);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1117; --surface: #171B24; --ink: #E8EBF2; --ink-2: #A3ABBD; --ink-3: #6F788C;
+  --line: rgba(232, 235, 242, .16); --line-strong: rgba(232, 235, 242, .3);
+  --mustard: #E0AE34; --mustard-ink: #EBC566; --mustard-soft: rgba(224, 174, 52, .15);
+  --masc: #86A9E8; --fem: #E68C95; --ok: #62BE8B; --ok-soft: rgba(98, 190, 139, .14);
+  --bad: #E68C95; --bad-soft: rgba(230, 140, 149, .14); --glass: rgba(23, 27, 36, .74);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); }
+body { color: var(--ink); font-family: var(--f-ui); font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid var(--mustard); outline-offset: 2px; border-radius: 8px; }
+.app { max-width: 560px; margin: 0 auto; padding-inline: 16px; padding-block: 0 120px; }
+
+/* Header */
+.top { position: sticky; top: 0; z-index: 20; margin-inline: -16px; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 10px; display: flex; align-items: center; gap: 10px; background: var(--glass); backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4); border-bottom: var(--hair) solid var(--line); }
+.brand { font-family: var(--f-fr); font-style: italic; font-size: 21px; letter-spacing: -.01em; font-weight: 500; flex: 1; min-width: 0; }
+.brand small { font-family: var(--f-ui); font-style: normal; font-size: 12px; color: var(--ink-3); margin-left: 6px; font-weight: 400; }
+.chip-stat { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; padding: 4px 10px; border-radius: 999px; border: var(--hair) solid var(--line); background: var(--surface); color: var(--ink-2); white-space: nowrap; }
+.chip-stat b { font-family: var(--f-mono); font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
+.icon-btn { width: 34px; height: 34px; border-radius: 50%; border: var(--hair) solid var(--line); background: var(--surface); display: grid; place-items: center; color: var(--ink-2); }
+.icon-btn svg { width: 17px; height: 17px; }
+
+/* Generic */
+.eyebrow { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
+h2.sec { font-size: 13px; font-weight: 600; color: var(--ink-2); margin: 28px 0 10px; display: flex; justify-content: space-between; align-items: baseline; }
+h2.sec span { font-weight: 400; color: var(--ink-3); font-size: 12px; }
+.card { background: var(--surface); border: var(--hair) solid var(--line); border-radius: 18px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 42px; padding: 0 16px; border-radius: 12px; border: var(--hair) solid var(--line-strong); background: var(--surface); font-weight: 500; font-size: 14.5px; transition: transform .12s, background .15s; }
+.btn:active { transform: scale(.98); }
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn.accent { background: var(--mustard); color: #1B1606; border-color: var(--mustard); }
+.btn.ghost { background: transparent; }
+.btn.block { width: 100%; }
+.btn[disabled] { opacity: .45; cursor: default; transform: none; }
+.muted { color: var(--ink-3); }
+.note { font-size: 12.5px; color: var(--ink-3); line-height: 1.6; margin: 18px 4px 0; text-wrap: pretty; }
+.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+/* Today strip */
+.today { margin-top: 18px; padding: 16px; display: flex; align-items: center; gap: 14px; }
+.today-main { flex: 1; min-width: 0; }
+.today-line { font-size: 15px; margin-top: 2px; }
+.today-line b { font-family: var(--f-mono); font-weight: 500; font-size: 22px; letter-spacing: -.02em; margin-right: 2px; }
+
+/* Level cards */
+.levels { display: grid; gap: 12px; }
+.level { padding: 16px; display: grid; gap: 14px; }
+.lv-head { display: flex; gap: 14px; align-items: center; }
+.lv-code { font-family: var(--f-fr); font-style: italic; font-weight: 500; font-size: 34px; line-height: 1; color: var(--mustard-ink); width: 52px; flex: none; letter-spacing: -.02em; }
+.lv-name { font-weight: 600; font-size: 15.5px; }
+.lv-sub { font-size: 12.5px; color: var(--ink-3); margin-top: 1px; }
+.lv-sub .num { color: var(--ink-2); }
+.bar { height: 6px; border-radius: 999px; background: var(--line); display: flex; overflow: hidden; }
+.bar i { display: block; height: 100%; }
+.bar .m { background: var(--mustard); }
+.bar .l { background: color-mix(in srgb, var(--mustard) 38%, transparent); }
+.legend { display: flex; gap: 14px; font-size: 11.5px; color: var(--ink-3); margin: 8px 2px 0; flex-wrap: wrap; }
+.legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; vertical-align: 0; }
+.lv-actions { display: flex; gap: 8px; }
+.lv-actions .btn { flex: 1; }
+
+/* Review */
+.review-hero { padding: 20px 18px; margin-top: 18px; display: grid; gap: 14px; }
+.big-num { font-family: var(--f-mono); font-size: 44px; line-height: 1; font-weight: 500; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.due-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.due-pill { font-size: 12px; padding: 3px 9px; border-radius: 999px; border: var(--hair) solid var(--line); color: var(--ink-2); }
+.due-pill b { font-family: var(--f-mono); font-weight: 500; color: var(--ink); }
+.boxes { padding: 16px 14px 12px; }
+.box-chart { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; align-items: end; height: 132px; }
+.box-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 5px; height: 100%; min-width: 0; }
+.box-col .v { font-family: var(--f-mono); font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.box-col .b { width: 100%; max-width: 40px; border-radius: 6px 6px 2px 2px; background: color-mix(in srgb, var(--mustard) 40%, transparent); min-height: 2px; }
+.box-col:nth-child(n+5) .b { background: var(--mustard); }
+.box-axis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 8px; border-top: var(--hair) solid var(--line); padding-top: 7px; }
+.box-axis div { text-align: center; font-size: 11px; color: var(--ink-3); line-height: 1.3; }
+.box-axis b { display: block; color: var(--ink-2); font-weight: 500; font-family: var(--f-mono); }
+.upcoming { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; padding: 12px; }
+.up-day { text-align: center; padding: 8px 0; border-radius: 10px; }
+.up-day .d { font-size: 11px; color: var(--ink-3); }
+.up-day .n { font-family: var(--f-mono); font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.up-day.has { background: var(--mustard-soft); }
+.up-day.has .n { color: var(--mustard-ink); }
+
+/* Test config */
+.field { margin-top: 18px; }
+.field > label, .field > .lbl { display: block; font-size: 13px; font-weight: 600; color: var(--ink-2); margin-bottom: 8px; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label { padding: 8px 13px; border-radius: 10px; border: var(--hair) solid var(--line-strong); background: var(--surface); font-size: 14px; cursor: pointer; transition: background .15s; }
+.seg input:checked + label { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.seg input:focus-visible + label { outline: 2px solid var(--mustard); outline-offset: 2px; }
+.hint { font-size: 12px; color: var(--ink-3); margin-top: 6px; }
+.history { padding: 4px 14px; }
+.hist-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: var(--hair) solid var(--line); font-size: 13.5px; }
+.hist-row:last-child { border-bottom: 0; }
+.hist-row .when { color: var(--ink-3); font-size: 12px; width: 74px; flex: none; }
+.hist-row .what { flex: 1; min-width: 0; color: var(--ink-2); }
+.score { font-family: var(--f-mono); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+/* Word list */
+.search { position: relative; margin-top: 18px; }
+.search input { width: 100%; height: 44px; padding: 0 14px 0 38px; border-radius: 12px; border: var(--hair) solid var(--line-strong); background: var(--surface); font-size: 15px; }
+.search svg { position: absolute; left: 12px; top: 13px; width: 18px; height: 18px; color: var(--ink-3); }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.filters button { padding: 5px 11px; border-radius: 999px; border: var(--hair) solid var(--line); background: transparent; font-size: 13px; color: var(--ink-2); }
+.filters button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.filters .sep { width: var(--hair); background: var(--line-strong); margin: 4px 2px; }
+.wlist { margin-top: 14px; overflow: hidden; }
+.wrow { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 0; border-bottom: var(--hair) solid var(--line); width: 100%; text-align: left; background: transparent; }
+.wrow:last-child { border-bottom: 0; }
+.wrow .fr { font-family: var(--f-fr); font-size: 18px; flex: none; max-width: 52%; overflow-wrap: anywhere; line-height: 1.3; }
+.wrow .ko { flex: 1; min-width: 0; font-size: 13.5px; color: var(--ink-2); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--line-strong); }
+.dot.l { background: color-mix(in srgb, var(--mustard) 50%, transparent); }
+.dot.m { background: var(--mustard); }
+.count-line { font-size: 12px; color: var(--ink-3); margin: 12px 4px 0; }
+.empty { padding: 32px 16px; text-align: center; color: var(--ink-3); font-size: 14px; }
+
+/* POS tags */
+.pos { font-family: var(--f-mono); font-size: 11.5px; padding: 1px 6px; border-radius: 5px; border: var(--hair) solid var(--line-strong); color: var(--ink-2); white-space: nowrap; }
+.pos.masc { color: var(--masc); border-color: color-mix(in srgb, var(--masc) 45%, transparent); }
+.pos.fem { color: var(--fem); border-color: color-mix(in srgb, var(--fem) 45%, transparent); }
+
+/* Tab bar */
+.tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)); display: flex; justify-content: center; pointer-events: none; }
+.tabbar nav { pointer-events: auto; display: flex; gap: 2px; padding: 5px; border-radius: 22px; background: var(--glass); backdrop-filter: blur(20px) saturate(1.5); -webkit-backdrop-filter: blur(20px) saturate(1.5); border: var(--hair) solid var(--line-strong); box-shadow: var(--shadow); width: 100%; max-width: 420px; }
+.tabbar button { flex: 1; border: 0; background: transparent; border-radius: 17px; padding: 7px 4px 6px; display: grid; justify-items: center; gap: 2px; font-size: 11.5px; color: var(--ink-3); position: relative; }
+.tabbar button svg { width: 21px; height: 21px; }
+.tabbar button[aria-selected="true"] { color: var(--ink); background: color-mix(in srgb, var(--surface) 80%, transparent); box-shadow: inset 0 0 0 var(--hair) var(--line); }
+.tabbar .badge { position: absolute; top: 3px; left: calc(50% + 8px); min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--mustard); color: #1B1606; font-family: var(--f-mono); font-size: 10.5px; line-height: 17px; font-weight: 500; }
+body.in-session .tabbar, body.in-session .tabs { display: none; }
+
+/* Session */
+.session { padding-top: calc(10px + env(safe-area-inset-top, 0px)); }
+.s-top { display: flex; align-items: center; gap: 12px; padding: 6px 0 14px; }
+.s-title { flex: 1; min-width: 0; font-size: 13px; color: var(--ink-2); }
+.s-title b { color: var(--ink); font-weight: 600; }
+.s-prog { height: 3px; border-radius: 3px; background: var(--line); overflow: hidden; margin-bottom: 18px; }
+.s-prog i { display: block; height: 100%; background: var(--mustard); transition: width .3s ease; }
+.flash { min-height: 330px; padding: 26px 22px 22px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow); cursor: pointer; }
+.flash .fr-big { font-family: var(--f-fr); font-size: clamp(34px, 9vw, 46px); line-height: 1.12; letter-spacing: -.015em; text-wrap: balance; overflow-wrap: anywhere; }
+.flash .meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.speak { display: inline-flex; align-items: center; gap: 5px; border: var(--hair) solid var(--line-strong); background: transparent; border-radius: 999px; padding: 4px 10px; font-size: 12.5px; color: var(--ink-2); }
+.speak svg { width: 15px; height: 15px; }
+.tap-hint { margin-top: auto; font-size: 12.5px; color: var(--ink-3); text-align: center; }
+.meaning { font-size: 19px; font-weight: 500; padding-top: 14px; border-top: var(--hair) solid var(--line); text-wrap: pretty; }
+.example { display: grid; gap: 4px; }
+.example .exfr { font-family: var(--f-fr); font-size: 19px; line-height: 1.45; display: flex; gap: 8px; align-items: flex-start; }
+.example .exfr span { flex: 1; min-width: 0; }
+.example .exko { font-size: 13.5px; color: var(--ink-2); }
+.example .exen { font-size: 13px; color: var(--ink-3); display: flex; gap: 7px; align-items: baseline; line-height: 1.45; }
+.example .exen .lbl, .ety { font-size: 10.5px; letter-spacing: .04em; padding: 1px 6px; border-radius: 5px; border: var(--hair) solid var(--line-strong); color: var(--ink-3); white-space: nowrap; flex: none; font-style: normal; }
+.en { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 8px; margin-top: -4px; }
+.en-g { font-size: 14.5px; color: var(--ink-2); font-style: italic; }
+.ety { font-size: 11.5px; letter-spacing: 0; white-space: normal; color: var(--mustard-ink); border-color: color-mix(in srgb, var(--mustard) 45%, transparent); }
+.ety.ff { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, transparent); }
+.fb .en { margin-top: -2px; }
+mark { background: linear-gradient(transparent 62%, var(--mustard-soft) 62%); color: inherit; font-weight: 500; padding: 0 1px; }
+.mini-speak { flex: none; width: 28px; height: 28px; border-radius: 50%; border: var(--hair) solid var(--line); background: transparent; display: grid; place-items: center; color: var(--ink-3); margin-top: 2px; }
+.mini-speak svg { width: 14px; height: 14px; }
+.s-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+.qcard { padding: 22px 20px; box-shadow: var(--shadow); display: grid; gap: 12px; }
+.qtype { font-size: 12px; color: var(--ink-3); }
+.qprompt-fr { font-family: var(--f-fr); font-size: clamp(30px, 8vw, 40px); line-height: 1.15; overflow-wrap: anywhere; }
+.qprompt-ko { font-size: 22px; font-weight: 600; line-height: 1.35; }
+.qsent { font-family: var(--f-fr); font-size: 21px; line-height: 1.5; }
+.blank { display: inline-block; min-width: 72px; border-bottom: 1.5px solid var(--mustard); margin: 0 2px; }
+.opts { display: grid; gap: 8px; margin-top: 14px; }
+.opt { display: flex; align-items: center; gap: 12px; text-align: left; padding: 13px 14px; border-radius: 14px; border: var(--hair) solid var(--line-strong); background: var(--surface); min-height: 54px; }
+.opt .k { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink-3); width: 18px; height: 18px; border-radius: 5px; border: var(--hair) solid var(--line-strong); display: grid; place-items: center; flex: none; }
+.opt .t { flex: 1; min-width: 0; }
+.opt.fr .t { font-family: var(--f-fr); font-size: 19px; }
+.opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.opt[disabled] { cursor: default; }
+.type-wrap { margin-top: 14px; display: grid; gap: 8px; }
+.type-wrap input { height: 52px; border-radius: 14px; border: var(--hair) solid var(--line-strong); background: var(--surface); padding: 0 14px; font-family: var(--f-fr); font-size: 21px; width: 100%; }
+.type-wrap input.right { border-color: var(--ok); background: var(--ok-soft); }
+.type-wrap input.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.accents { display: flex; gap: 5px; flex-wrap: wrap; }
+.accents button { width: 36px; height: 34px; border-radius: 9px; border: var(--hair) solid var(--line); background: var(--surface); font-family: var(--f-fr); font-size: 17px; }
+.fb { margin-top: 14px; padding: 16px; border-radius: 16px; display: grid; gap: 10px; border: var(--hair) solid var(--line); background: var(--surface); }
+.fb .verdict { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.fb .verdict.ok { color: var(--ok); }
+.fb .verdict.no { color: var(--bad); }
+.fb .ans { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.fb .ans .fr { font-family: var(--f-fr); font-size: 22px; }
+.fb .ans .ko { color: var(--ink-2); font-size: 14px; }
+.fb .spell { font-size: 12.5px; color: var(--mustard-ink); }
+.result { padding: 26px 20px; text-align: center; display: grid; gap: 6px; box-shadow: var(--shadow); }
+.result .big { font-family: var(--f-fr); font-size: 58px; line-height: 1; font-style: italic; color: var(--mustard-ink); }
+.result .sub { color: var(--ink-2); font-size: 14px; }
+.wrong-list { margin-top: 14px; }
+.wrong-list .wrow { cursor: default; }
+.end-actions { display: grid; gap: 8px; margin-top: 16px; }
+
+/* Sheet */
+.overlay { position: fixed; inset: 0; z-index: 50; background: rgba(10, 14, 22, .38); display: flex; align-items: flex-end; justify-content: center; }
+.sheet { width: 100%; max-width: 560px; max-height: 88%; overflow-y: auto; background: var(--surface); border-radius: 22px 22px 0 0; border: var(--hair) solid var(--line-strong); border-bottom: 0; padding: 10px 20px calc(24px + env(safe-area-inset-bottom, 0px)); animation: up .22s ease; }
+@keyframes up { from { transform: translateY(24px); opacity: .6; } to { transform: none; opacity: 1; } }
+.grab { width: 38px; height: 4px; border-radius: 2px; background: var(--line-strong); margin: 0 auto 14px; }
+.sheet h3 { margin: 0 0 4px; font-size: 17px; }
+.set-row { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: var(--hair) solid var(--line); }
+.set-row:last-child { border-bottom: 0; }
+.set-row .txt { flex: 1; min-width: 0; }
+.set-row .txt small { display: block; color: var(--ink-3); font-size: 12px; }
+.switch { position: relative; width: 46px; height: 28px; flex: none; }
+.switch input { opacity: 0; width: 100%; height: 100%; margin: 0; position: absolute; cursor: pointer; z-index: 1; }
+.switch span { position: absolute; inset: 0; border-radius: 999px; background: var(--line-strong); transition: background .2s; }
+.switch span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .2s; }
+.switch input:checked + span { background: var(--mustard); }
+.switch input:checked + span::after { transform: translateX(18px); }
+.switch input:focus-visible + span { outline: 2px solid var(--mustard); outline-offset: 2px; }
+.danger { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 50%, transparent); }
+.sync { font-size: 12px; color: var(--ink-3); margin-top: 14px; display: flex; align-items: center; gap: 6px; }
+.sync i { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); }
+.sync.on i { background: var(--ok); }
+.detail-fr { font-family: var(--f-fr); font-size: 36px; line-height: 1.15; overflow-wrap: anywhere; }
+.detail-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 4px; }
+.detail-stats div { border: var(--hair) solid var(--line); border-radius: 12px; padding: 9px 10px; }
+.detail-stats small { display: block; font-size: 11px; color: var(--ink-3); }
+.detail-stats b { font-family: var(--f-mono); font-weight: 500; font-size: 15px; }
+.stack { display: grid; gap: 14px; }
+.toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-size: 13.5px; z-index: 60; box-shadow: var(--shadow); }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">Carnet de mots<small>프랑스어 핵심 어휘</small></div>
+    <span class="chip-stat" title="연속 학습일"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3 4 5 4 9a4 4 0 0 1-8 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 0-8z"/></svg><b id="streakNum">0</b>일</span>
+    <button class="icon-btn" id="openSettings" aria-label="설정"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  </header>
+
+  <main class="tabs">
+    <section id="tab-learn">
+      <div class="card today">
+        <div class="today-main">
+          <div class="eyebrow">오늘 복습할 단어</div>
+          <div class="today-line"><b id="dueNum">0</b>개 <span class="muted" id="todayDone"></span></div>
+        </div>
+        <button class="btn primary" data-goto="review">복습하기</button>
+      </div>
+      <h2 class="sec">레벨별 학습 <span>CEFR 기준</span></h2>
+      <div class="levels" id="levels"></div>
+      <div class="legend"><span><i style="background:var(--mustard)"></i>암기 완료</span><span><i style="background:color-mix(in srgb,var(--mustard) 38%,transparent)"></i>학습 중</span><span><i style="background:var(--line)"></i>새 단어</span></div>
+      <p class="note">일상 회화에서 자주 쓰는 핵심 어휘 440개를 레벨별로 묶었어요. 레벨 구분은 학습 순서를 위한 참고용이에요. 새 단어를 익히면 내일부터 복습 일정에 올라가고, 맞힐수록 복습 간격이 1일 → 2일 → 4일 → 8일 → 16일 → 32일로 늘어나요.</p>
+    </section>
+
+    <section id="tab-review" hidden>
+      <div class="card review-hero">
+        <div>
+          <div class="eyebrow">지금 복습할 단어</div>
+          <div class="big-num" id="revDue">0</div>
+        </div>
+        <div class="due-row" id="revByLevel"></div>
+        <button class="btn accent block" id="startReview">복습 시작</button>
+        <div class="hint" id="revHint"></div>
+      </div>
+      <h2 class="sec">기억 상자 <span>복습 간격별 단어 수</span></h2>
+      <div class="card boxes">
+        <div class="box-chart" id="boxChart"></div>
+        <div class="box-axis" id="boxAxis"></div>
+      </div>
+      <p class="note">맞히면 다음 상자로 옮겨져 복습 간격이 늘어나고, 틀리면 1번 상자로 돌아와요. 16일 상자부터는 암기 완료로 셉니다.</p>
+      <h2 class="sec">앞으로 7일 <span>복습 예정</span></h2>
+      <div class="card upcoming" id="upcoming"></div>
+    </section>
+
+    <section id="tab-test" hidden>
+      <div class="field">
+        <div class="lbl">레벨</div>
+        <div class="seg" id="tLevel"></div>
+      </div>
+      <div class="field">
+        <div class="lbl">출제 범위</div>
+        <div class="seg">
+          <input type="radio" name="tScope" id="tScopeLearned" value="learned" checked><label for="tScopeLearned">학습한 단어</label>
+          <input type="radio" name="tScope" id="tScopeAll" value="all"><label for="tScopeAll">레벨 전체</label>
+        </div>
+        <div class="hint" id="tPoolHint"></div>
+      </div>
+      <div class="field">
+        <div class="lbl">문제 유형</div>
+        <div class="seg">
+          <input type="radio" name="tType" id="tTypeMix" value="mix" checked><label for="tTypeMix">섞어서</label>
+          <input type="radio" name="tType" id="tTypeFr2ko" value="fr2ko"><label for="tTypeFr2ko">뜻 고르기</label>
+          <input type="radio" name="tType" id="tTypeKo2fr" value="ko2fr"><label for="tTypeKo2fr">단어 고르기</label>
+          <input type="radio" name="tType" id="tTypeCloze" value="cloze"><label for="tTypeCloze">예문 빈칸</label>
+          <input type="radio" name="tType" id="tTypeType" value="type"><label for="tTypeType">직접 쓰기</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="lbl">문항 수</div>
+        <div class="seg">
+          <input type="radio" name="tCount" id="tCount10" value="10" checked><label for="tCount10">10</label>
+          <input type="radio" name="tCount" id="tCount20" value="20"><label for="tCount20">20</label>
+          <input type="radio" name="tCount" id="tCount30" value="30"><label for="tCount30">30</label>
+        </div>
+      </div>
+      <div class="field"><button class="btn primary block" id="startTest">테스트 시작</button></div>
+      <p class="note">테스트는 기억 상자를 옮기지 않아요. 틀린 단어만 오늘 복습 목록에 추가돼요.</p>
+      <h2 class="sec">최근 결과</h2>
+      <div class="card history" id="history"></div>
+    </section>
+
+    <section id="tab-words" hidden>
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="wq" type="search" placeholder="프랑스어, 한국어, 영어로 검색" autocomplete="off" autocapitalize="off" spellcheck="false">
+      </div>
+      <div class="filters" id="wFilters"></div>
+      <div class="count-line" id="wCount"></div>
+      <div class="card wlist" id="wList"></div>
+    </section>
+  </main>
+
+  <div id="session" class="session" hidden></div>
+</div>
+
+<div class="tabbar">
+  <nav role="tablist" aria-label="메뉴">
+    <button role="tab" data-tab="learn" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg>학습</button>
+    <button role="tab" data-tab="review" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg>복습<span class="badge" id="tabBadge" hidden>0</span></button>
+    <button role="tab" data-tab="test" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg>테스트</button>
+    <button role="tab" data-tab="words" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg>단어장</button>
+  </nav>
+</div>
+
+<div id="overlay" class="overlay" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+(function () {
+'use strict';
+const RAW = [["A1","bonjour","interj","안녕하세요 (낮 인사)","*Bonjour*, madame !","안녕하세요, 부인!","hello, good day","lit. \"good day\"","Good day, madam!"],["A1","merci","interj","고맙습니다","*Merci* beaucoup pour votre aide.","도와주셔서 정말 고맙습니다.","thank you, thanks","","Thanks a lot for your help."],["A1","s'il vous plaît","expr","부탁합니다, ~주세요","Un café, *s'il vous plaît*.","커피 한 잔 주세요.","please","lit. \"if it pleases you\"","A coffee, if it pleases you."],["A1","au revoir","expr","안녕히 가세요/계세요","*Au revoir*, à demain !","안녕히 가세요, 내일 봬요!","goodbye","lit. \"to the re-seeing\"","To the re-seeing, until tomorrow!"],["A1","oui","adv","네, 예","*Oui*, je comprends.","네, 이해해요.","yes","","Yes, I understand."],["A1","non","adv","아니요","*Non*, merci.","아니요, 괜찮습니다.","no","","No, thanks."],["A1","pardon","interj","실례합니다, 죄송합니다","*Pardon*, où est la gare ?","실례합니다, 역이 어디예요?","excuse me, sorry","cf. pardon","Pardon, where is the station?"],["A1","salut","interj","안녕 (친한 사이 인사)","*Salut*, tu vas bien ?","안녕, 잘 지내?","hi, bye","cf. salute","Hi, you go well? (= Hi, how are you?)"],["A1","ça va","expr","잘 지내다, 괜찮다","*Ça va*, merci.","잘 지내요, 고마워요.","it's going (fine)","lit. \"that goes\"","That goes, thanks. (= I'm fine, thanks.)"],["A1","il y a","expr","~이 있다","*Il y a* un problème.","문제가 있어요.","there is, there are","lit. \"it there has\"","It there has a problem. (= There is a problem.)"],["A1","être","v","~이다, 있다","Je *suis* coréen.","저는 한국인이에요.","to be","","I am Korean."],["A1","avoir","v","가지다, 있다","J'*ai* deux frères.","저는 형제가 둘 있어요.","to have","","I have two brothers."],["A1","aller","v","가다","Nous *allons* au cinéma ce soir.","우리는 오늘 저녁 영화관에 가요.","to go","","We go to the cinema this evening."],["A1","faire","v","하다, 만들다","Qu'est-ce que tu *fais* ?","너 뭐 해?","to do, to make","","What is it that you do? (= What are you doing?)"],["A1","vouloir","v","원하다","Je *veux* un verre d'eau.","물 한 잔 마시고 싶어요.","to want","","I want a glass of water."],["A1","pouvoir","v","~할 수 있다","Tu *peux* m'aider ?","나 좀 도와줄 수 있어?","can, to be able to","","You can help me? (= Can you help me?)"],["A1","parler","v","말하다","Vous *parlez* français ?","프랑스어 하세요?","to speak, to talk","cf. parley, parliament","You speak French?"],["A1","manger","v","먹다","On *mange* à midi.","우리는 정오에 밥을 먹어요.","to eat","cf. manger (feeding trough)","One eats at noon. (= We eat at noon.)"],["A1","boire","v","마시다","Elle *boit* du thé le matin.","그녀는 아침에 차를 마셔요.","to drink","cf. beverage","She drinks some tea the morning. (= in the morning)"],["A1","habiter","v","살다, 거주하다","J'*habite* à Séoul.","저는 서울에 살아요.","to live (in a place)","cf. inhabit","I inhabit in Seoul. (= I live in Seoul.)"],["A1","aimer","v","좋아하다, 사랑하다","J'*aime* la musique.","저는 음악을 좋아해요.","to like, to love","cf. amorous","I love the music. (= I like music.)"],["A1","venir","v","오다","Il *vient* de Paris.","그는 파리 출신이에요.","to come","cf. convene","He comes from Paris."],["A1","voir","v","보다, 보이다","Je *vois* la mer.","바다가 보여요.","to see","cf. vision","I see the sea."],["A1","savoir","v","(사실을) 알다","Je ne *sais* pas.","모르겠어요.","to know (a fact)","cf. savvy","I know not. (= I don't know.)"],["A1","prendre","v","잡다, (교통수단을) 타다","Je *prends* le bus.","저는 버스를 타요.","to take","cf. apprehend","I take the bus."],["A1","travailler","v","일하다","Il *travaille* dans un hôpital.","그는 병원에서 일해요.","to work","cf. travail","He works in a hospital."],["A1","acheter","v","사다","J'*achète* du pain.","빵을 사요.","to buy","","I buy some bread."],["A1","comprendre","v","이해하다","Je ne *comprends* pas.","이해가 안 돼요.","to understand","cf. comprehend","I comprehend not. (= I don't understand.)"],["A1","dormir","v","자다","Le bébé *dort*.","아기가 자고 있어요.","to sleep","cf. dormant, dormitory","The baby sleeps."],["A1","regarder","v","(눈여겨) 보다, 바라보다","On *regarde* un film.","우리는 영화를 봐요.","to watch, to look at","cf. regard","One watches a film. (= We're watching a film.)"],["A1","écouter","v","듣다","J'*écoute* la radio.","라디오를 들어요.","to listen (to)","cf. auscultate","I listen the radio. (= I listen to the radio.)"],["A1","lire","v","읽다","Elle *lit* un livre.","그녀는 책을 읽어요.","to read","cf. lecture","She reads a book."],["A1","écrire","v","쓰다","J'*écris* une lettre.","편지를 써요.","to write","cf. scribe, script","I write a letter."],["A1","attendre","v","기다리다","J'*attends* le train.","기차를 기다려요.","to wait (for)","≠ attend","I await the train. (= I'm waiting for the train.)"],["A1","chercher","v","찾다","Je *cherche* mes clés.","열쇠를 찾고 있어요.","to look for","cf. search","I search my keys. (= I'm looking for my keys.)"],["A1","donner","v","주다","Je *donne* un livre à Marie.","마리에게 책을 줘요.","to give","cf. donate","I give a book to Marie."],["A1","aider","v","돕다","Je peux vous *aider* ?","도와드릴까요?","to help","cf. aid","I can help you? (= May I help you?)"],["A1","la maison","nf","집","Ma *maison* est petite.","우리 집은 작아요.","house, home","cf. mansion","My house is small."],["A1","l'eau","nf","물","Je bois de l'*eau*.","물을 마셔요.","water","cf. eau de toilette","I drink some water."],["A1","le pain","nm","빵","Le *pain* est chaud.","빵이 따끈해요.","bread","cf. company (sharing bread)","The bread is warm."],["A1","le café","nm","커피; 카페","On prend un *café* ?","커피 한잔할까요?","coffee; café","","One takes a coffee? (= Shall we get a coffee?)"],["A1","l'ami","nm","친구","C'est mon *ami* Paul.","제 친구 폴이에요.","friend","cf. amiable","It's my friend Paul."],["A1","la famille","nf","가족","Ma *famille* habite à Busan.","우리 가족은 부산에 살아요.","family","","My family lives in Busan."],["A1","le père","nm","아버지","Mon *père* est médecin.","우리 아버지는 의사예요.","father","cf. paternal","My father is doctor. (= My father is a doctor.)"],["A1","la mère","nf","어머니","Ma *mère* aime cuisiner.","우리 어머니는 요리를 좋아하세요.","mother","cf. maternal","My mother loves to cook."],["A1","l'enfant","nmf","아이","L'*enfant* joue dans le jardin.","아이가 정원에서 놀아요.","child","cf. infant","The child plays in the garden."],["A1","l'homme","nm","남자; 사람","Cet *homme* est très grand.","이 남자는 키가 아주 커요.","man; human","cf. homicide","This man is very tall."],["A1","la femme","nf","여자; 아내","Cette *femme* est ma voisine.","이 여자분은 제 이웃이에요.","woman; wife","cf. feminine","This woman is my neighbor."],["A1","le jour","nm","날, 하루; 낮","Il y a sept *jours* dans une semaine.","일주일은 7일이에요.","day","cf. journal, journey","There are seven days in a week."],["A1","la semaine","nf","주, 일주일","La *semaine* prochaine, je pars.","다음 주에 떠나요.","week","","The week next, I leave. (= Next week, I'm leaving.)"],["A1","le mois","nm","달, 월","Ce *mois*-ci, je travaille beaucoup.","이번 달에 일을 많이 해요.","month","","This month-here, I work a lot. (= This month I'm working a lot.)"],["A1","l'année","nf","해, 년","Bonne *année* !","새해 복 많이 받으세요!","year","cf. annual","Good year! (= Happy New Year!)"],["A1","l'heure","nf","시, 시간","Quelle *heure* est-il ?","몇 시예요?","hour; o'clock","cf. hour","What hour is it? (= What time is it?)"],["A1","le matin","nm","아침","Je me lève tôt le *matin*.","저는 아침에 일찍 일어나요.","morning","cf. matinee","I get myself up early the morning. (= I get up early in the morning.)"],["A1","le soir","nm","저녁","À ce *soir* !","오늘 저녁에 봐요!","evening","cf. soirée","To this evening! (= See you tonight!)"],["A1","aujourd'hui","adv","오늘","*Aujourd'hui*, il fait froid.","오늘은 추워요.","today","lit. \"on the day of today\"","Today, it makes cold. (= It's cold today.)"],["A1","demain","adv","내일","Je pars *demain*.","저는 내일 떠나요.","tomorrow","","I leave tomorrow."],["A1","hier","adv","어제","*Hier*, j'ai vu Marie.","어제 마리를 봤어요.","yesterday","","Yesterday, I have seen Marie. (= I saw Marie yesterday.)"],["A1","la ville","nf","도시","Paris est une grande *ville*.","파리는 큰 도시예요.","city, town","cf. village","Paris is a big city."],["A1","la rue","nf","거리, 길","J'habite dans cette *rue*.","저는 이 거리에 살아요.","street","","I live in this street."],["A1","la gare","nf","(기차)역","La *gare* est loin d'ici ?","역이 여기서 멀어요?","(train) station","","The station is far from here?"],["A1","le train","nm","기차","Le *train* part à huit heures.","기차는 8시에 출발해요.","train","","The train leaves at eight hours. (= at 8 o'clock)"],["A1","la voiture","nf","자동차","Ma *voiture* est rouge.","제 차는 빨간색이에요.","car","","My car is red."],["A1","l'école","nf","학교","Les enfants vont à l'*école*.","아이들은 학교에 가요.","school","cf. school","The children go to the school."],["A1","le travail","nm","일, 직장","Je vais au *travail* à pied.","저는 걸어서 출근해요.","work, job","cf. travail","I go to the work on foot. (= I walk to work.)"],["A1","le livre","nm","책","Ce *livre* est intéressant.","이 책은 재미있어요.","book","cf. library","This book is interesting."],["A1","le restaurant","nm","식당","On dîne au *restaurant* ?","식당에서 저녁 먹을까요?","restaurant","","One dines at the restaurant? (= Shall we eat out tonight?)"],["A1","la chambre","nf","방, 침실","Ma *chambre* est au premier étage.","제 방은 2층에 있어요.","room, bedroom","cf. chamber","My room is at the first floor. (= 2nd floor in Korean/US counting)"],["A1","la table","nf","탁자, 식탁","Les clés sont sur la *table*.","열쇠는 탁자 위에 있어요.","table","","The keys are on the table."],["A1","la porte","nf","문","Ferme la *porte*, s'il te plaît.","문 좀 닫아 줘.","door","cf. portal","Close the door, if it pleases you."],["A1","le chat","nm","고양이","Le *chat* dort sur le canapé.","고양이가 소파 위에서 자요.","cat","","The cat sleeps on the sofa."],["A1","le chien","nm","개","J'ai un *chien* noir.","저는 검은 개를 키워요.","dog","cf. canine","I have a dog black. (= I have a black dog.)"],["A1","l'argent","nm","돈; 은","Je n'ai pas d'*argent*.","돈이 없어요.","money; silver","cf. Argentina","I have not of money. (= I have no money.)"],["A1","le nom","nm","이름; 성","Quel est votre *nom* ?","성함이 어떻게 되세요?","name; surname","cf. noun, nominal","What is your name?"],["A1","le pays","nm","나라","La Corée est un beau *pays*.","한국은 아름다운 나라예요.","country","cf. peasant","Korea is a beautiful country."],["A1","la langue","nf","언어; 혀","Le français est une belle *langue*.","프랑스어는 아름다운 언어예요.","language; tongue","cf. language","French is a beautiful language."],["A1","le temps","nm","시간; 날씨","Je n'ai pas le *temps*.","시간이 없어요.","time; weather","cf. tempo, temporary","I have not the time. (= I don't have time.)"],["A1","le téléphone","nm","전화(기)","Mon *téléphone* ne marche pas.","제 전화기가 안 돼요.","telephone, phone","","My telephone doesn't walk. (= My phone doesn't work.)"],["A1","la tête","nf","머리","J'ai mal à la *tête*.","머리가 아파요.","head","","I have pain at the head. (= I have a headache.)"],["A1","le petit-déjeuner","nm","아침 식사","Le *petit-déjeuner* est prêt.","아침 식사 준비됐어요.","breakfast","lit. \"small lunch\"","The breakfast is ready."],["A1","le déjeuner","nm","점심 식사","On se voit au *déjeuner* ?","점심 때 볼까요?","lunch","lit. \"un-fast\", cf. dinner","One sees each other at the lunch? (= See you at lunch?)"],["A1","le dîner","nm","저녁 식사","Le *dîner* est à vingt heures.","저녁 식사는 8시예요.","dinner","cf. dine","The dinner is at twenty hours. (= Dinner is at 8 p.m.)"],["A1","la pomme","nf","사과","Je mange une *pomme*.","사과를 먹어요.","apple","cf. pomegranate","I eat an apple."],["A1","le fromage","nm","치즈","Les Français aiment le *fromage*.","프랑스 사람들은 치즈를 좋아해요.","cheese","","The French love the cheese. (= French people love cheese.)"],["A1","la boulangerie","nf","빵집","La *boulangerie* ouvre à sept heures.","빵집은 7시에 문을 열어요.","bakery","","The bakery opens at seven hours. (= at 7 o'clock)"],["A1","le magasin","nm","가게, 상점","Ce *magasin* est fermé le dimanche.","이 가게는 일요일에 문을 닫아요.","shop, store","cf. magazine (storehouse)","This shop is closed the Sunday. (= closed on Sundays)"],["A1","grand","adj","큰, 키가 큰","Mon frère est *grand*.","우리 형은 키가 커요.","big, tall","cf. grand","My brother is tall."],["A1","petit","adj","작은","J'ai un *petit* appartement.","저는 작은 아파트에 살아요.","small, little","cf. petite","I have a small apartment."],["A1","bon","adj","좋은, 맛있는","Ce gâteau est très *bon*.","이 케이크 정말 맛있어요.","good; tasty","cf. bonus","This cake is very good."],["A1","beau","adj","아름다운, 잘생긴; (날씨가) 좋은","Il fait *beau* aujourd'hui.","오늘 날씨가 좋아요.","beautiful, handsome","cf. beauty","It makes beautiful today. (= The weather is nice today.)"],["A1","nouveau","adj","새로운","J'ai un *nouveau* téléphone.","새 전화기가 생겼어요.","new","cf. novel, nouveau","I have a new telephone."],["A1","chaud","adj","더운, 뜨거운","Le café est trop *chaud*.","커피가 너무 뜨거워요.","hot, warm","","The coffee is too hot."],["A1","froid","adj","추운, 차가운","L'eau est *froide*.","물이 차가워요.","cold","cf. frigid","The water is cold."],["A1","content","adj","기쁜, 만족한","Je suis très *content*.","정말 기뻐요.","happy, glad","cf. content","I am very content."],["A1","fatigué","adj","피곤한","Je suis *fatigué* ce soir.","오늘 저녁엔 피곤해요.","tired","cf. fatigue","I am tired this evening."],["A1","facile","adj","쉬운","Cet exercice est *facile*.","이 문제는 쉬워요.","easy","cf. facile","This exercise is easy."],["A1","difficile","adj","어려운","Le français est *difficile* ?","프랑스어 어려워요?","difficult","","French is difficult?"],["A1","cher","adj","비싼; 소중한","Ce sac est trop *cher*.","이 가방은 너무 비싸요.","expensive; dear","cf. cherish","This bag is too expensive."],["A1","ouvert","adj","열린, 영업 중인","Le musée est *ouvert* ?","박물관 열려 있어요?","open","cf. overt","The museum is open?"],["A1","fermé","adj","닫힌","La porte est *fermée*.","문이 닫혀 있어요.","closed","","The door is closed."],["A1","blanc","adj","흰, 하얀","Je voudrais du vin *blanc*.","화이트 와인 주세요.","white","cf. blank","I would like some wine white. (= some white wine)"],["A1","noir","adj","검은","Elle porte une robe *noire*.","그녀는 검은 원피스를 입고 있어요.","black","cf. film noir","She wears a dress black. (= a black dress)"],["A1","très","adv","매우, 아주","C'est *très* bien !","아주 좋아요!","very","","It's very good!"],["A1","beaucoup","adv","많이","J'aime *beaucoup* Paris.","파리를 정말 좋아해요.","a lot, much","lit. \"beautiful blow\"","I love a lot Paris. (= I really love Paris.)"],["A1","bien","adv","잘","Tu parles *bien* français.","너 프랑스어 잘한다.","well","","You speak well French. (= You speak French well.)"],["A1","ici","adv","여기","J'habite *ici* depuis un an.","여기 산 지 1년 됐어요.","here","","I live here since one year. (= I've lived here for a year.)"],["A1","maintenant","adv","지금","Je dois partir *maintenant*.","지금 가야 해요.","now","lit. \"holding in hand\"","I must leave now."],["A1","toujours","adv","항상; 여전히","Il est *toujours* en retard.","그는 항상 늦어요.","always; still","lit. \"all days\"","He is always in delay. (= He's always late.)"],["A1","souvent","adv","자주","Je vais *souvent* au parc.","저는 공원에 자주 가요.","often","","I go often to the park."],["A1","avec","prep","~와 함께","Je viens *avec* toi.","너랑 같이 갈게.","with","","I come with you."],["A1","dans","prep","~ 안에","Le chat est *dans* la boîte.","고양이가 상자 안에 있어요.","in, inside","","The cat is in the box."],["A1","pour","prep","~을 위해, ~에게","C'est un cadeau *pour* toi.","너 주려고 산 선물이야.","for","","It's a gift for you."],["A1","mais","conj","그러나, 하지만","C'est cher, *mais* c'est beau.","비싸지만 예뻐요.","but","","It's expensive, but it's beautiful."],["A1","et","conj","그리고, ~와","Du pain *et* du fromage.","빵과 치즈.","and","","Some bread and some cheese."],["A1","où","adv","어디","*Où* sont les toilettes ?","화장실이 어디예요?","where","","Where are the toilets?"],["A1","quand","adv","언제","*Quand* est-ce que tu pars ?","언제 떠나?","when","","When is it that you leave? (= When are you leaving?)"],["A1","pourquoi","adv","왜","*Pourquoi* tu ris ?","왜 웃어?","why","lit. \"for what\"","Why you laugh? (= Why are you laughing?)"],["A1","comment","adv","어떻게","*Comment* allez-vous ?","어떻게 지내세요?","how","","How go you? (= How are you?)"],["A1","combien","adv","얼마나, 몇","C'est *combien* ?","얼마예요?","how much, how many","","It's how much? (= How much is it?)"],["A1","qui","pron","누구","*Qui* est-ce ?","누구예요?","who","","Who is it?"],["A2","devoir","v","~해야 하다","Je *dois* travailler demain.","내일 일해야 해요.","must, to have to; to owe","cf. debt","I must work tomorrow."],["A2","partir","v","떠나다, 출발하다","Le train *part* dans dix minutes.","기차가 10분 후에 떠나요.","to leave, to depart","cf. depart","The train leaves in ten minutes."],["A2","sortir","v","나가다, 외출하다","On *sort* ce soir ?","오늘 저녁에 나갈까?","to go out, to exit","","One goes out this evening? (= Shall we go out tonight?)"],["A2","arriver","v","도착하다; (일이) 일어나다","J'*arrive* à la gare.","역에 거의 다 왔어요.","to arrive; to happen","cf. arrive","I arrive at the station."],["A2","rentrer","v","돌아오다, 귀가하다","Je *rentre* à la maison.","집에 들어가요.","to go back home","cf. re-enter","I re-enter to the house. (= I'm going home.)"],["A2","rester","v","머무르다, 남다","Je *reste* à Paris une semaine.","파리에 일주일 머물러요.","to stay, to remain","cf. rest (remainder)","I stay in Paris one week."],["A2","commencer","v","시작하다","Le film *commence* à vingt heures.","영화는 8시에 시작해요.","to begin","cf. commence","The film commences at twenty hours. (= starts at 8 p.m.)"],["A2","finir","v","끝내다, 끝나다","Je *finis* mon travail à six heures.","저는 6시에 일을 끝내요.","to finish","","I finish my work at six hours."],["A2","ouvrir","v","열다","Tu peux *ouvrir* la fenêtre ?","창문 좀 열어 줄래?","to open","","You can open the window?"],["A2","fermer","v","닫다","N'oublie pas de *fermer* la porte.","문 닫는 거 잊지 마.","to close","","Don't forget to close the door."],["A2","oublier","v","잊다","J'ai *oublié* mon parapluie.","우산을 깜빡했어요.","to forget","cf. oblivion","I have forgotten my umbrella."],["A2","penser","v","생각하다","Je *pense* que c'est vrai.","그게 사실이라고 생각해요.","to think","cf. pensive","I think that it's true."],["A2","croire","v","믿다","Je ne te *crois* pas.","난 네 말 안 믿어.","to believe","cf. credible, credo","I you believe not. (= I don't believe you.)"],["A2","dire","v","말하다","Qu'est-ce que tu *dis* ?","뭐라고 했어?","to say, to tell","cf. diction, dictate","What is it that you say? (= What are you saying?)"],["A2","demander","v","묻다, 요청하다","Je vais *demander* le chemin.","길을 물어볼게요.","to ask","≠ demand","I go ask the way. (= I'll ask for directions.)"],["A2","répondre","v","대답하다","Il ne *répond* pas au téléphone.","그는 전화를 안 받아요.","to answer, to reply","cf. respond","He responds not to the telephone. (= He isn't answering the phone.)"],["A2","payer","v","지불하다","Je peux *payer* par carte ?","카드로 계산해도 돼요?","to pay","","I can pay by card?"],["A2","coûter","v","값이 ~이다","Ça *coûte* dix euros.","10유로예요.","to cost","","That costs ten euros."],["A2","essayer","v","시도하다; 입어 보다","Je peux *essayer* cette veste ?","이 재킷 입어 봐도 돼요?","to try; to try on","cf. essay, assay","I can try this jacket?"],["A2","choisir","v","고르다, 선택하다","Tu as *choisi* ton plat ?","요리 골랐어?","to choose","","You have chosen your dish?"],["A2","préférer","v","더 좋아하다","Je *préfère* le thé au café.","저는 커피보다 차가 더 좋아요.","to prefer","","I prefer the tea to the coffee."],["A2","connaître","v","(사람·장소를) 알다","Tu *connais* ce restaurant ?","이 식당 알아?","to know (a person, place)","cf. cognition, recognize","You know this restaurant?"],["A2","apprendre","v","배우다","J'*apprends* le français.","저는 프랑스어를 배워요.","to learn","cf. apprentice","I learn the French. (= I'm learning French.)"],["A2","jouer","v","놀다; 연주하다","Il *joue* du piano.","그는 피아노를 쳐요.","to play","","He plays of the piano. (= He plays the piano.)"],["A2","marcher","v","걷다; 작동하다","J'aime *marcher* dans le parc.","공원 걷는 걸 좋아해요.","to walk; to work (machine)","cf. march","I love to walk in the park."],["A2","se lever","v","일어나다","Je *me lève* à sept heures.","저는 7시에 일어나요.","to get up","lit. \"to lift oneself\", cf. lever","I lift myself at seven hours. (= I get up at 7.)"],["A2","se coucher","v","잠자리에 들다","Je *me couche* tard.","저는 늦게 자요.","to go to bed","lit. \"to lay oneself down\", cf. couch","I lay myself down late. (= I go to bed late.)"],["A2","s'appeler","v","이름이 ~이다","Je *m'appelle* Minji.","제 이름은 민지예요.","to be called","lit. \"to call oneself\"","I call myself Minji. (= My name is Minji.)"],["A2","trouver","v","찾아내다; ~라고 생각하다","Je *trouve* ce film génial.","이 영화 정말 좋은 것 같아요.","to find; to think (that)","","I find this film great."],["A2","perdre","v","잃다","J'ai *perdu* mon portefeuille.","지갑을 잃어버렸어요.","to lose","cf. perdition","I have lost my wallet."],["A2","envoyer","v","보내다","Je t'*envoie* un message.","메시지 보낼게.","to send","cf. envoy","I you send a message. (= I'll send you a message.)"],["A2","appeler","v","부르다; 전화하다","Je t'*appelle* ce soir.","오늘 저녁에 전화할게.","to call","cf. appeal","I you call this evening. (= I'll call you tonight.)"],["A2","réserver","v","예약하다","Je voudrais *réserver* une table.","테이블을 예약하고 싶어요.","to book, to reserve","","I would like to reserve a table."],["A2","visiter","v","(장소를) 방문하다","Nous *visitons* le Louvre demain.","우리는 내일 루브르를 구경해요.","to visit (a place)","","We visit the Louvre tomorrow."],["A2","voyager","v","여행하다","J'adore *voyager*.","여행하는 걸 정말 좋아해요.","to travel","cf. voyage","I adore to travel. (= I love traveling.)"],["A2","cuisiner","v","요리하다","Mon père *cuisine* très bien.","아버지는 요리를 아주 잘하세요.","to cook","cf. cuisine","My father cooks very well."],["A2","se reposer","v","쉬다","Tu dois *te reposer*.","너 좀 쉬어야 해.","to rest","lit. \"to repose oneself\"","You must yourself rest. (= You need to rest.)"],["A2","changer","v","바꾸다, 갈아타다","Je dois *changer* de train à Lyon.","리옹에서 기차를 갈아타야 해요.","to change","","I must change of train at Lyon. (= change trains in Lyon)"],["A2","montrer","v","보여 주다","Tu peux me *montrer* le chemin ?","길 좀 알려 줄래?","to show","cf. demonstrate","You can me show the way?"],["A2","tomber","v","떨어지다, 넘어지다","Attention, tu vas *tomber* !","조심해, 넘어지겠어!","to fall","","Attention, you go fall! (= Watch out, you're going to fall!)"],["A2","le billet","nm","표; 지폐","J'ai acheté deux *billets* pour le concert.","콘서트 표 두 장 샀어요.","ticket; banknote","cf. bill","I have bought two tickets for the concert."],["A2","l'avion","nm","비행기","L'*avion* part à midi.","비행기는 정오에 출발해요.","airplane","cf. aviation","The airplane leaves at noon."],["A2","l'aéroport","nm","공항","Je vais à l'*aéroport* en taxi.","택시로 공항에 가요.","airport","","I go to the airport in taxi. (= by taxi)"],["A2","l'hôtel","nm","호텔","L'*hôtel* est près de la gare.","호텔은 역 근처에 있어요.","hotel","","The hotel is near of the station."],["A2","la valise","nf","여행 가방","Ma *valise* est trop lourde.","제 여행 가방이 너무 무거워요.","suitcase","cf. valise","My suitcase is too heavy."],["A2","le voyage","nm","여행","Bon *voyage* !","즐거운 여행 되세요!","trip, journey","cf. voyage","Good voyage! (= Have a good trip!)"],["A2","la plage","nf","해변","On va à la *plage* cet été.","이번 여름에 해변에 가요.","beach","","One goes to the beach this summer."],["A2","la mer","nf","바다","La *mer* est calme aujourd'hui.","오늘 바다가 잔잔해요.","sea","cf. marine, mermaid","The sea is calm today."],["A2","la montagne","nf","산","Ils font du ski à la *montagne*.","그들은 산에서 스키를 타요.","mountain","","They do some ski at the mountain. (= They ski in the mountains.)"],["A2","le quartier","nm","동네, 구역","J'aime bien mon *quartier*.","저는 우리 동네가 좋아요.","neighborhood","cf. quarter (Latin Quarter)","I like well my neighborhood. (= I really like my neighborhood.)"],["A2","l'appartement","nm","아파트(집)","Notre *appartement* a trois pièces.","우리 집은 방이 세 칸이에요.","apartment, flat","","Our apartment has three rooms."],["A2","la cuisine","nf","부엌; 요리","La *cuisine* française est célèbre.","프랑스 요리는 유명해요.","kitchen; cooking, cuisine","cf. cuisine","The cuisine French is famous. (= French cuisine is famous.)"],["A2","le marché","nm","시장","J'achète mes légumes au *marché*.","저는 시장에서 채소를 사요.","market","cf. market","I buy my vegetables at the market."],["A2","les courses","nfpl","장보기","Je fais les *courses* le samedi.","토요일마다 장을 봐요.","groceries, errands","lit. \"the runs\"","I do the groceries the Saturday. (= I shop on Saturdays.)"],["A2","la viande","nf","고기","Je ne mange pas de *viande*.","저는 고기를 안 먹어요.","meat","cf. viands","I eat not of meat. (= I don't eat meat.)"],["A2","le poisson","nm","생선, 물고기","Ce *poisson* est très frais.","이 생선은 아주 신선해요.","fish","cf. Pisces","This fish is very fresh."],["A2","les légumes","nmpl","채소","Mange tes *légumes* !","채소 먹어!","vegetables","cf. legume","Eat your vegetables!"],["A2","le vin","nm","와인","Un verre de *vin* rouge, s'il vous plaît.","레드 와인 한 잔 주세요.","wine","cf. vine, vintage","A glass of wine red, if it pleases you. (= A glass of red wine, please.)"],["A2","l'addition","nf","(식당) 계산서","L'*addition*, s'il vous plaît.","계산서 주세요.","bill, check (restaurant)","lit. \"the addition\"","The bill, if it pleases you."],["A2","le plat","nm","요리; 접시","Quel est le *plat* du jour ?","오늘의 요리가 뭐예요?","dish; plate","cf. platter","What is the dish of the day?"],["A2","le vêtement","nm","옷","J'achète des *vêtements* pour l'hiver.","겨울옷을 사요.","garment, clothing","cf. vestment","I buy some garments for the winter."],["A2","la chaussure","nf","신발","Ces *chaussures* sont confortables.","이 신발은 편해요.","shoe","","These shoes are comfortable."],["A2","la taille","nf","크기, 사이즈; 키","Vous faites quelle *taille* ?","사이즈가 어떻게 되세요?","size; height; waist","cf. tailor","You make which size? (= What size do you take?)"],["A2","le médecin","nm","의사","Je dois aller chez le *médecin*.","병원에 가 봐야 해요.","doctor","cf. medicine","I must go at the doctor's."],["A2","la pharmacie","nf","약국","Il y a une *pharmacie* près d'ici ?","이 근처에 약국 있어요?","pharmacy","","There is a pharmacy near of here?"],["A2","le corps","nm","몸","Le sport est bon pour le *corps*.","운동은 몸에 좋아요.","body","cf. corpse, corps","The sport is good for the body. (= Exercise is good for the body.)"],["A2","la santé","nf","건강","À votre *santé* !","건배! (건강을 위하여)","health","cf. sanitary","To your health! (= Cheers!)"],["A2","le rendez-vous","nm","약속, 예약","J'ai un *rendez-vous* chez le dentiste.","치과 예약이 있어요.","appointment, meeting","lit. \"present yourselves\"","I have a rendezvous at the dentist's. (= a dentist appointment)"],["A2","le métier","nm","직업","Quel est ton *métier* ?","직업이 뭐야?","trade, occupation","","What is your trade? (= What do you do?)"],["A2","le bureau","nm","사무실; 책상","Je suis au *bureau* jusqu'à six heures.","6시까지 사무실에 있어요.","office; desk","cf. bureau","I am at the office until six hours."],["A2","le/la collègue","nmf","동료","Mon *collègue* est malade aujourd'hui.","제 동료가 오늘 아파요.","colleague","","My colleague is sick today."],["A2","la réunion","nf","회의","La *réunion* commence à dix heures.","회의는 10시에 시작해요.","meeting","cf. reunion","The meeting commences at ten hours."],["A2","les vacances","nfpl","휴가, 방학","On part en *vacances* en août.","우리는 8월에 휴가를 가요.","holidays, vacation","cf. vacancy","One leaves in vacation in August. (= We go on vacation in August.)"],["A2","le week-end","nm","주말","Qu'est-ce que tu fais ce *week-end* ?","이번 주말에 뭐 해?","weekend","","What is it that you do this weekend?"],["A2","la météo","nf","일기예보, 날씨","La *météo* annonce de la pluie.","일기예보에서 비가 온대요.","weather forecast","cf. meteorology","The forecast announces some rain."],["A2","la pluie","nf","비","J'adore le bruit de la *pluie*.","빗소리를 정말 좋아해요.","rain","cf. pluvial","I adore the noise of the rain. (= I love the sound of rain.)"],["A2","la neige","nf","눈 (날씨)","Il y a de la *neige* sur les toits.","지붕 위에 눈이 쌓였어요.","snow","","There is some snow on the roofs."],["A2","le soleil","nm","해, 햇빛","Il y a du *soleil* aujourd'hui.","오늘 해가 났어요.","sun","cf. solar","There is some sun today. (= It's sunny today.)"],["A2","l'anniversaire","nm","생일; 기념일","Joyeux *anniversaire* !","생일 축하해!","birthday; anniversary","cf. anniversary","Joyous anniversary! (= Happy birthday!)"],["A2","le cadeau","nm","선물","Merci pour le *cadeau* !","선물 고마워!","gift, present","","Thanks for the gift!"],["A2","la fête","nf","파티, 축제","On organise une *fête* samedi.","토요일에 파티를 열어요.","party, festival","cf. feast, fête","One organizes a party Saturday. (= We're throwing a party on Saturday.)"],["A2","le chemin","nm","길","C'est le bon *chemin* ?","이 길이 맞아요?","way, path","","It's the good way? (= Is this the right way?)"],["A2","le métro","nm","지하철","Je prends le *métro* tous les jours.","저는 매일 지하철을 타요.","subway, underground","cf. metropolitan","I take the metro all the days. (= every day)"],["A2","la fenêtre","nf","창문","Il fait chaud, ouvre la *fenêtre*.","더우니까 창문 열어.","window","","It makes hot, open the window. (= It's hot, open the window.)"],["A2","la clé","nf","열쇠","Où sont mes *clés* ?","내 열쇠 어디 있지?","key","cf. clef","Where are my keys?"],["A2","vieux","adj","늙은, 오래된","C'est une *vieille* maison.","오래된 집이에요.","old","","It's an old house."],["A2","jeune","adj","젊은, 어린","Elle est très *jeune*.","그녀는 아주 젊어요.","young","cf. juvenile","She is very young."],["A2","long","adj","긴","C'est un *long* voyage.","긴 여행이에요.","long","","It's a long voyage."],["A2","court","adj","짧은","Il a les cheveux *courts*.","그는 머리가 짧아요.","short","cf. curt","He has the hair short. (= He has short hair.)"],["A2","lourd","adj","무거운","Ce sac est *lourd*.","이 가방은 무거워요.","heavy","","This bag is heavy."],["A2","léger","adj","가벼운","Je voudrais un repas *léger*.","가벼운 식사를 하고 싶어요.","light (in weight)","","I would like a meal light. (= a light meal)"],["A2","malade","adj","아픈","Je suis *malade* depuis hier.","어제부터 아파요.","sick, ill","cf. malady","I am sick since yesterday. (= I've been sick since yesterday.)"],["A2","libre","adj","자유로운; 비어 있는","Cette place est *libre* ?","이 자리 비었어요?","free; available","cf. liberty","This place is free? (= Is this seat free?)"],["A2","occupé","adj","바쁜; 사용 중인","Désolé, je suis *occupé*.","미안, 나 바빠.","busy; taken","cf. occupied","Sorry, I am occupied. (= Sorry, I'm busy.)"],["A2","prêt","adj","준비된","Tu es *prêt* ?","준비됐어?","ready","","You are ready?"],["A2","gentil","adj","친절한, 착한","Ta sœur est très *gentille*.","네 여동생은 정말 친절해.","kind, nice","cf. gentle","Your sister is very kind."],["A2","propre","adj","깨끗한; 자신의","La chambre est *propre*.","방이 깨끗해요.","clean; own","cf. proper","The room is clean."],["A2","sale","adj","더러운","Mes chaussures sont *sales*.","제 신발이 더러워요.","dirty","","My shoes are dirty."],["A2","rapide","adj","빠른","Le TGV est très *rapide*.","TGV는 아주 빨라요.","fast, quick","cf. rapid","The TGV is very rapid."],["A2","dernier","adj","마지막의; 지난","La semaine *dernière*, j'étais à Lyon.","지난주에 리옹에 있었어요.","last","cf. dernier cri","The week last, I was in Lyon. (= Last week, I was in Lyon.)"],["A2","prochain","adj","다음의","À la *prochaine* !","다음에 또 봐요!","next","","To the next! (= See you next time!)"],["A2","seul","adj","혼자인; 유일한","J'habite *seul*.","저는 혼자 살아요.","alone; only","cf. sole","I live alone."],["A2","important","adj","중요한","C'est très *important*.","그건 아주 중요해요.","important","","It's very important."],["A2","déjà","adv","이미, 벌써","J'ai *déjà* mangé.","벌써 먹었어요.","already","cf. déjà vu","I have already eaten."],["A2","encore","adv","아직; 다시, 더","Tu veux *encore* du café ?","커피 더 마실래?","again; still; more","cf. encore","You want again some coffee? (= More coffee?)"],["A2","bientôt","adv","곧","À *bientôt* !","곧 만나요!","soon","lit. \"well early\"","To soon! (= See you soon!)"],["A2","tard","adv","늦게","Il est *tard*, je rentre.","늦었으니 집에 갈게.","late","cf. tardy","It is late, I go home."],["A2","tôt","adv","일찍","Je pars *tôt* demain matin.","내일 아침 일찍 떠나요.","early","","I leave early tomorrow morning."],["A2","ensemble","adv","함께","On dîne *ensemble* ?","같이 저녁 먹을까?","together","cf. ensemble","One dines together? (= Shall we have dinner together?)"],["A2","peut-être","adv","아마도","*Peut-être* demain.","아마 내일.","maybe, perhaps","lit. \"can be\"","Can-be tomorrow. (= Maybe tomorrow.)"],["A2","vraiment","adv","정말로","C'est *vraiment* délicieux !","정말 맛있어요!","really, truly","cf. verily","It's truly delicious!"],["A2","trop","adv","너무","C'est *trop* loin à pied.","걸어가기엔 너무 멀어요.","too, too much","","It's too far on foot."],["A2","assez","adv","충분히; 꽤","J'ai *assez* mangé, merci.","충분히 먹었어요, 고마워요.","enough; quite","","I have enough eaten, thanks. (= I've had enough, thanks.)"],["A2","loin","adv","멀리","La plage n'est pas *loin*.","해변은 멀지 않아요.","far","","The beach is not far."],["A2","près","adv","가까이","J'habite *près* du parc.","공원 근처에 살아요.","near, close","","I live near of the park. (= I live near the park.)"],["A2","parce que","conj","왜냐하면, ~ 때문에","Je suis en retard *parce que* le bus est en panne.","버스가 고장 나서 늦었어요.","because","lit. \"by this that\"","I am in delay because the bus is in breakdown. (= I'm late because the bus broke down.)"],["A2","si","conj","만약 ~라면","*Si* tu veux, on peut y aller.","원하면 거기 갈 수 있어.","if","","If you want, one can there go. (= If you want, we can go there.)"],["A2","pendant","prep","~ 동안","J'ai dormi *pendant* le film.","영화 보는 동안 잤어요.","during","cf. pending","I have slept during the film."],["A2","avant","prep","~ 전에","Lave-toi les mains *avant* le repas.","식사 전에 손 씻어.","before","cf. avant-garde","Wash yourself the hands before the meal. (= Wash your hands before eating.)"],["A2","après","prep","~ 후에","On se voit *après* le travail ?","퇴근 후에 볼까?","after","cf. après-ski","One sees each other after the work? (= See you after work?)"],["B1","réussir","v","성공하다; (시험에) 합격하다","Elle a *réussi* son examen.","그녀는 시험에 합격했어요.","to succeed; to pass (an exam)","","She has succeeded her exam. (= She passed her exam.)"],["B1","permettre","v","허락하다, 가능하게 하다","Internet *permet* de travailler à distance.","인터넷 덕분에 원격 근무가 가능해요.","to allow, to make possible","cf. permit","Internet permits to work at distance. (= The internet makes remote work possible.)"],["B1","devenir","v","~이 되다","Il veut *devenir* avocat.","그는 변호사가 되고 싶어 해요.","to become","","He wants to become lawyer. (= He wants to become a lawyer.)"],["B1","sembler","v","~처럼 보이다","Tu *sembles* fatigué.","너 피곤해 보여.","to seem","cf. semblance, resemble","You seem tired."],["B1","décider","v","결정하다","J'ai *décidé* de déménager.","이사하기로 결정했어요.","to decide","","I have decided of moving. (= I decided to move house.)"],["B1","expliquer","v","설명하다","Tu peux m'*expliquer* ce mot ?","이 단어 좀 설명해 줄래?","to explain","","You can me explain this word?"],["B1","raconter","v","이야기하다","*Raconte*-moi ton voyage !","여행 얘기 좀 해 줘!","to tell (a story)","cf. recount","Recount-me your voyage! (= Tell me about your trip!)"],["B1","remarquer","v","알아차리다, 주목하다","J'ai *remarqué* un changement.","변화를 알아차렸어요.","to notice","cf. remark","I have remarked a change. (= I noticed a change.)"],["B1","se souvenir","v","기억하다","Tu *te souviens* de moi ?","나 기억나?","to remember","cf. souvenir","You yourself remember of me? (= Do you remember me?)"],["B1","s'inquiéter","v","걱정하다","Ne *t'inquiète* pas.","걱정하지 마.","to worry","cf. disquiet","Don't yourself worry. (= Don't worry.)"],["B1","se tromper","v","실수하다, 착각하다","Excusez-moi, je *me suis trompé*.","죄송해요, 제가 착각했어요.","to be mistaken","lit. \"to deceive oneself\"","Excuse me, I have deceived myself. (= Sorry, I was wrong.)"],["B1","se dépêcher","v","서두르다","*Dépêche-toi*, on est en retard !","서둘러, 우리 늦었어!","to hurry","","Hurry yourself, one is in delay! (= Hurry, we're late!)"],["B1","s'habituer","v","익숙해지다","Je *m'habitue* à la vie à Paris.","파리 생활에 익숙해지고 있어요.","to get used to","cf. habit","I myself habituate to the life in Paris. (= I'm getting used to life in Paris.)"],["B1","profiter","v","누리다, 즐기다, 이용하다","*Profite* bien de tes vacances !","휴가 잘 즐겨!","to enjoy, to make the most of","cf. profit","Profit well from your vacation! (= Enjoy your vacation!)"],["B1","améliorer","v","개선하다, 향상시키다","Je veux *améliorer* mon français.","프랑스어 실력을 늘리고 싶어요.","to improve","cf. ameliorate","I want to ameliorate my French. (= I want to improve my French.)"],["B1","éviter","v","피하다","J'*évite* le sucre.","저는 설탕을 피해요.","to avoid","","I avoid the sugar. (= I avoid sugar.)"],["B1","partager","v","나누다, 공유하다","On *partage* l'addition ?","계산 나눠서 할까?","to share","","One shares the bill? (= Shall we split the bill?)"],["B1","proposer","v","제안하다","Je *propose* d'aller au cinéma.","영화 보러 가는 게 어때요?","to suggest, to propose","cf. propose","I propose to go to the cinema."],["B1","accepter","v","받아들이다, 수락하다","Il a *accepté* l'offre.","그는 제안을 받아들였어요.","to accept","","He has accepted the offer."],["B1","refuser","v","거절하다","Elle a *refusé* l'invitation.","그녀는 초대를 거절했어요.","to refuse, to decline","cf. refuse","She has refused the invitation."],["B1","obtenir","v","얻다, 취득하다","J'ai *obtenu* mon visa.","비자를 받았어요.","to obtain, to get","cf. obtain","I have obtained my visa."],["B1","recevoir","v","받다","J'ai *reçu* ton message.","네 메시지 받았어.","to receive","","I have received your message."],["B1","conseiller","v","조언하다, 추천하다","Je vous *conseille* ce vin.","이 와인을 추천해 드려요.","to advise, to recommend","cf. counsel","I you counsel this wine. (= I recommend this wine.)"],["B1","empêcher","v","막다, 방해하다","Le bruit m'*empêche* de dormir.","소음 때문에 잠을 못 자요.","to prevent","cf. impede","The noise me prevents from sleeping. (= The noise keeps me awake.)"],["B1","compter","v","세다; 기대다; ~할 작정이다","Je *compte* sur toi.","너만 믿을게.","to count; to count on; to intend","cf. compute","I count on you."],["B1","s'occuper","v","돌보다, 맡다","Je *m'occupe* des enfants.","제가 아이들을 돌봐요.","to look after, to take care of","cf. occupy","I occupy myself of the children. (= I look after the children.)"],["B1","se plaindre","v","불평하다","Il *se plaint* toujours.","그는 늘 불평해요.","to complain","cf. complain, plaintiff","He complains himself always. (= He's always complaining.)"],["B1","se rendre compte","v","깨닫다","Je *me suis rendu compte* de mon erreur.","제 실수를 깨달았어요.","to realize","lit. \"to render oneself account\"","I have rendered myself account of my error. (= I realized my mistake.)"],["B1","manquer","v","부족하다; 그리워지다; 놓치다","Tu me *manques*.","네가 보고 싶어.","to miss; to lack","cf. manqué","You are lacking to me. (= I miss you.)"],["B1","valoir","v","~의 가치가 있다","Ça *vaut* la peine.","그럴 만한 가치가 있어요.","to be worth","cf. value, valor","That is worth the pain. (= It's worth it.)"],["B1","tenir","v","잡다, 유지하다","*Tiens*, c'est pour toi.","자, 이거 너 줄게.","to hold, to keep","cf. tenacious","Hold, it's for you. (= Here, this is for you.)"],["B1","suivre","v","따라가다; 수강하다","Je *suis* un cours de cuisine.","요리 수업을 듣고 있어요.","to follow; to take (a course)","cf. suite, pursue","I follow a course of cooking. (= I'm taking a cooking class.)"],["B1","vivre","v","살다, 생활하다","Ils *vivent* à la campagne.","그들은 시골에 살아요.","to live","cf. vivid, revive","They live at the countryside. (= They live in the country.)"],["B1","mourir","v","죽다","Je *meurs* de faim !","배고파 죽겠어!","to die","cf. mortal","I die of hunger! (= I'm starving!)"],["B1","rêver","v","꿈꾸다","Je *rêve* de visiter le Japon.","일본 여행이 꿈이에요.","to dream","cf. reverie","I dream of visiting the Japan. (= My dream is to visit Japan.)"],["B1","déménager","v","이사하다","Nous *déménageons* le mois prochain.","우리는 다음 달에 이사해요.","to move (house)","","We move the month next. (= We're moving next month.)"],["B1","louer","v","빌리다, 임대하다","On a *loué* une voiture.","우리는 차를 빌렸어요.","to rent, to hire","","One has rented a car. (= We rented a car.)"],["B1","rembourser","v","환불하다, (돈을) 갚다","Vous pouvez me *rembourser* ?","환불해 주실 수 있어요?","to refund, to pay back","cf. reimburse","You can me reimburse? (= Can I get a refund?)"],["B1","se renseigner","v","문의하다, 알아보다","Je vais *me renseigner* à l'accueil.","안내 데스크에 문의해 볼게요.","to inquire, to find out","","I go inform myself at the reception. (= I'll ask at the front desk.)"],["B1","se débrouiller","v","그럭저럭 해내다","Je *me débrouille* en français.","프랑스어로 그럭저럭 의사소통해요.","to manage, to get by","lit. \"to un-scramble oneself\"","I manage myself in French. (= I get by in French.)"],["B1","l'avis","nm","의견","À mon *avis*, c'est une bonne idée.","제 생각엔 좋은 생각이에요.","opinion","cf. advice","To my opinion, it's a good idea. (= In my opinion, it's a good idea.)"],["B1","l'idée","nf","생각, 아이디어","C'est une excellente *idée* !","아주 좋은 생각이야!","idea","","It's an excellent idea!"],["B1","le choix","nm","선택","Tu n'as pas le *choix*.","넌 선택의 여지가 없어.","choice","","You have not the choice. (= You have no choice.)"],["B1","la raison","nf","이유; 이성","Tu as *raison*.","네 말이 맞아.","reason","","You have reason. (= You're right.)"],["B1","le problème","nm","문제","Pas de *problème* !","문제없어요!","problem","","Not of problem! (= No problem!)"],["B1","la solution","nf","해결책","Il y a toujours une *solution*.","해결책은 늘 있어요.","solution","","There is always a solution."],["B1","l'expérience","nf","경험; 실험","Elle a beaucoup d'*expérience*.","그녀는 경험이 많아요.","experience; experiment","","She has a lot of experience."],["B1","le souvenir","nm","추억, 기억; 기념품","J'ai de bons *souvenirs* de Paris.","파리에 대한 좋은 추억이 있어요.","memory; souvenir","cf. souvenir","I have some good memories of Paris."],["B1","le sentiment","nm","감정, 느낌","J'ai le *sentiment* qu'il ment.","그가 거짓말하는 것 같은 느낌이 들어요.","feeling","cf. sentiment","I have the feeling that he lies."],["B1","la peur","nf","두려움, 무서움","J'ai *peur* des chiens.","저는 개가 무서워요.","fear","","I have fear of the dogs. (= I'm afraid of dogs.)"],["B1","la chance","nf","운; 기회","Bonne *chance* pour ton examen !","시험 잘 봐! (행운을 빌어)","luck; chance","cf. chance","Good luck for your exam!"],["B1","le bruit","nm","소음, 소리","Il y a trop de *bruit* ici.","여기 너무 시끄러워요.","noise","cf. bruit (rumor)","There is too much of noise here. (= It's too noisy here.)"],["B1","l'entreprise","nf","기업, 회사","Il travaille dans une grande *entreprise*.","그는 대기업에서 일해요.","company, business","cf. enterprise","He works in a big enterprise. (= He works for a large company.)"],["B1","le salaire","nm","월급, 급여","Son *salaire* a augmenté.","그의 월급이 올랐어요.","salary, wages","cf. salary","His salary has increased."],["B1","l'emploi","nm","일자리; 사용","Elle cherche un *emploi*.","그녀는 일자리를 찾고 있어요.","job; use","cf. employ","She seeks an employment. (= She's looking for a job.)"],["B1","le projet","nm","계획, 프로젝트","Quels sont tes *projets* pour l'été ?","여름에 무슨 계획 있어?","plan, project","cf. project","What are your projects for the summer? (= What are your summer plans?)"],["B1","l'avenir","nm","미래, 장래","Personne ne connaît l'*avenir*.","아무도 미래를 몰라요.","future","lit. \"to-come\"","Nobody knows the to-come. (= Nobody knows the future.)"],["B1","le moyen","nm","수단, 방법","Le vélo est un bon *moyen* de transport.","자전거는 좋은 교통수단이에요.","means, way","","The bike is a good means of transport."],["B1","le logement","nm","주거, 숙소","Trouver un *logement* à Paris est difficile.","파리에서 집 구하기는 어려워요.","housing, accommodation","cf. lodging","To find a lodging in Paris is difficult."],["B1","le loyer","nm","집세, 월세","Le *loyer* est trop élevé.","월세가 너무 비싸요.","rent","","The rent is too elevated. (= The rent is too high.)"],["B1","le quotidien","nm","일상; 일간지","Le sport fait partie de mon *quotidien*.","운동은 제 일상의 일부예요.","daily life; daily paper","cf. quotidian","The sport makes part of my daily. (= Exercise is part of my daily life.)"],["B1","l'habitude","nf","습관","J'ai l'*habitude* de me lever tôt.","저는 일찍 일어나는 습관이 있어요.","habit","cf. habitude","I have the habit of lifting myself early. (= I usually get up early.)"],["B1","la vie","nf","삶, 생활","C'est la *vie* !","인생이 다 그렇지!","life","cf. vital, vivid","It's the life! (= That's life!)"],["B1","le monde","nm","세계; 사람들","Il y a du *monde* dans la rue.","거리에 사람이 많아요.","world; people","cf. mundane","There is some world in the street. (= There are lots of people in the street.)"],["B1","les gens","nmpl","사람들","Les *gens* sont sympas ici.","여기 사람들은 친절해요.","people","","The people are nice here."],["B1","la société","nf","사회; 회사","La *société* change vite.","사회는 빠르게 변해요.","society; company","cf. society","The society changes quickly."],["B1","l'environnement","nm","환경","Il faut protéger l'*environnement*.","환경을 보호해야 해요.","environment","","It must protect the environment. (= We must protect the environment.)"],["B1","la nouvelle","nf","소식","J'ai une bonne *nouvelle* !","좋은 소식이 있어!","piece of news","cf. novel","I have a good news! (= I have good news!)"],["B1","l'article","nm","기사; 물품","J'ai lu un *article* intéressant.","흥미로운 기사를 읽었어요.","article; item","","I have read an article interesting."],["B1","le conseil","nm","조언","Tu peux me donner un *conseil* ?","조언 좀 해 줄래?","advice; council","cf. counsel","You can me give a counsel? (= Can you give me some advice?)"],["B1","la différence","nf","차이","Quelle est la *différence* ?","차이가 뭐예요?","difference","","What is the difference?"],["B1","le niveau","nm","수준, 실력","Mon *niveau* de français s'améliore.","제 프랑스어 실력이 늘고 있어요.","level","","My level of French improves itself. (= My French is getting better.)"],["B1","le retard","nm","지각, 지연","Le train a vingt minutes de *retard*.","기차가 20분 지연됐어요.","delay, lateness","cf. retard","The train has twenty minutes of delay. (= The train is 20 minutes late.)"],["B1","la panne","nf","고장","La voiture est en *panne*.","차가 고장 났어요.","breakdown (machine)","","The car is in breakdown. (= The car has broken down.)"],["B1","sûr","adj","확실한; 안전한","Tu es *sûr* ?","확실해?","sure; safe","cf. sure","You are sure?"],["B1","possible","adj","가능한","C'est *possible* de payer en espèces ?","현금으로 계산 가능해요?","possible","","It's possible to pay in cash?"],["B1","nécessaire","adj","필요한","Ce n'est pas *nécessaire*.","그럴 필요 없어요.","necessary","","It's not necessary."],["B1","inquiet","adj","걱정하는, 불안한","Je suis *inquiet* pour lui.","그가 걱정돼요.","worried","cf. disquiet","I am worried for him."],["B1","déçu","adj","실망한","Je suis un peu *déçu*.","조금 실망했어요.","disappointed","≠ deceived","I am a little disappointed."],["B1","étonné","adj","놀란","Je suis *étonné* de te voir ici.","여기서 너를 보다니 놀랍다.","surprised","cf. astonished","I am astonished to see you here."],["B1","heureux","adj","행복한, 기쁜","Je suis *heureux* de te voir.","만나서 기뻐.","happy","","I am happy to see you."],["B1","drôle","adj","웃긴; 이상한","Ce film est très *drôle*.","이 영화 정말 웃겨요.","funny; odd","cf. droll","This film is very funny."],["B1","sympa","adj","(구어) 좋은, 친절한","Ton ami est *sympa*.","네 친구 괜찮은 사람이다.","nice, friendly","short for sympathique","Your friend is nice."],["B1","génial","adj","멋진, 끝내주는","C'est *génial* !","대박이야!","great, brilliant","≠ genial","It's brilliant! (= That's awesome!)"],["B1","pratique","adj","편리한, 실용적인","Ce sac est très *pratique*.","이 가방은 아주 실용적이에요.","practical, handy","cf. practical","This bag is very practical."],["B1","dangereux","adj","위험한","Cette route est *dangereuse*.","이 길은 위험해요.","dangerous","","This road is dangerous."],["B1","célèbre","adj","유명한","C'est un acteur *célèbre*.","유명한 배우예요.","famous","cf. celebrity","It's an actor famous. (= He's a famous actor.)"],["B1","actuel","adj","현재의 (≠ 실제의)","La situation *actuelle* est difficile.","현재 상황은 어려워요.","current, present","≠ actual","The situation current is difficult. (= The current situation is difficult.)"],["B1","principal","adj","주요한","C'est la raison *principale*.","그게 주된 이유예요.","main","cf. principal","It's the reason principal. (= That's the main reason.)"],["B1","meilleur","adj","더 좋은, 최고의","C'est mon *meilleur* ami.","제일 친한 친구예요.","better, best","cf. ameliorate","It's my best friend."],["B1","d'ailleurs","adv","게다가, 그런데","*D'ailleurs*, il ne m'a pas appelé.","게다가 그는 나한테 전화도 안 했어.","besides, by the way","lit. \"from elsewhere\"","From elsewhere, he has not called me. (= Besides, he didn't call me.)"],["B1","pourtant","adv","그런데도, 하지만","Il est riche, *pourtant* il n'est pas heureux.","그는 부자인데도 행복하지 않아요.","yet, however","","He is rich, yet he is not happy."],["B1","donc","conj","그러므로, 그래서","Je pense, *donc* je suis.","나는 생각한다, 고로 존재한다.","so, therefore","","I think, therefore I am."],["B1","alors","adv","그러면, 그래서","*Alors*, on y va ?","그럼, 갈까?","so, then","","So, one there goes? (= So, shall we go?)"],["B1","enfin","adv","마침내; 아무튼","*Enfin*, tu es là !","드디어 왔구나!","finally, at last","lit. \"in end\"","In end, you are there! (= Finally, you're here!)"],["B1","surtout","adv","특히","J'aime les fruits, *surtout* les fraises.","과일을 좋아하는데 특히 딸기를 좋아해요.","especially, above all","lit. \"over all\"","I love the fruits, above all the strawberries."],["B1","plutôt","adv","오히려, 차라리; 꽤","Prenons *plutôt* le métro.","차라리 지하철을 타자.","rather, instead","lit. \"more early\"","Let's take rather the metro. (= Let's take the metro instead.)"],["B1","environ","adv","약, 대략","Le trajet dure *environ* une heure.","이동은 대략 한 시간 걸려요.","about, approximately","cf. environs","The trip lasts about one hour."],["B1","d'habitude","adv","평소에","*D'habitude*, je prends le bus.","평소엔 버스를 타요.","usually","lit. \"of habit\"","Of habit, I take the bus. (= Usually I take the bus.)"],["B1","quand même","adv","그래도","Il pleut, mais on sort *quand même*.","비가 오지만 그래도 나가요.","anyway, still","lit. \"when same\"","It rains, but one goes out all the same. (= We're going out anyway.)"],["B1","grâce à","prep","~ 덕분에","J'ai réussi *grâce à* toi.","네 덕분에 해냈어.","thanks to","cf. grace","I have succeeded thanks to you."],["B1","à cause de","prep","~ 때문에 (부정적)","Le vol est annulé *à cause de* la neige.","눈 때문에 항공편이 취소됐어요.","because of","lit. \"at cause of\"","The flight is cancelled at cause of the snow. (= because of the snow)"],["B1","sans","prep","~ 없이","Un café *sans* sucre, s'il vous plaît.","설탕 없는 커피 주세요.","without","cf. sans-serif","A coffee without sugar, if it pleases you."],["B1","depuis","prep","~ 이래로, ~ 전부터","J'apprends le français *depuis* deux ans.","2년째 프랑스어를 배우고 있어요.","since; for (time)","","I learn the French since two years. (= I've been learning French for two years.)"],["B1","malgré","prep","~에도 불구하고","Il est venu *malgré* la pluie.","그는 비가 오는데도 왔어요.","despite","lit. \"bad will\"","He has come despite the rain."],["B1","bien que","conj","비록 ~일지라도 (+접속법)","*Bien qu'*il pleuve, nous sortons.","비가 오지만 우리는 나가요.","although (+ subjunctive)","","Although it rain, we go out. (= Although it's raining, we're going out.)"],["B1","avoir besoin de","expr","~이 필요하다","J'*ai besoin de* repos.","저는 휴식이 필요해요.","to need","lit. \"to have need of\"","I have need of rest. (= I need rest.)"],["B1","avoir envie de","expr","~하고 싶다","J'*ai envie de* glace.","아이스크림 먹고 싶어.","to feel like, to want","lit. \"to have envy of\"","I have envy of ice cream. (= I feel like having ice cream.)"],["B1","faire attention","expr","조심하다, 주의하다","*Fais attention* à la marche !","계단 조심해!","to be careful, to watch out","lit. \"to make attention\"","Make attention to the step! (= Watch your step!)"],["B1","en avoir marre","expr","(구어) 지긋지긋하다","J'*en ai marre* de ce bruit.","이 소음 지긋지긋해.","to be fed up (slang)","","I of-it have enough of this noise. (= I'm sick of this noise.)"],["B2","aborder","v","(주제를) 다루다; 다가가다","Nous allons *aborder* un sujet délicat.","민감한 주제를 다룰 거예요.","to tackle, to address (a topic)","cf. aboard (à bord)","We go approach a subject delicate. (= We're going to tackle a sensitive subject.)"],["B2","affirmer","v","단언하다, 주장하다","Il *affirme* qu'il était chez lui.","그는 집에 있었다고 단언해요.","to assert, to claim","cf. affirm","He affirms that he was at his home."],["B2","souligner","v","강조하다; 밑줄 긋다","Je tiens à *souligner* ce point.","이 점을 강조하고 싶어요.","to stress; to underline","lit. \"to under-line\"","I hold to underline this point. (= I'd like to stress this point.)"],["B2","constater","v","확인하다, (사실을) 알게 되다","On *constate* une hausse des prix.","물가가 오른 것이 확인돼요.","to note, to observe","","One notes a rise of the prices. (= Prices are going up.)"],["B2","envisager","v","고려하다, 계획하다","J'*envisage* de changer de travail.","이직을 고려하고 있어요.","to consider, to plan","cf. envisage","I envisage to change of work. (= I'm thinking of changing jobs.)"],["B2","prévoir","v","예상하다, 계획하다","La météo *prévoit* des orages pour demain.","일기예보에서 내일 뇌우가 온대요.","to forecast, to plan","lit. \"to fore-see\"","The forecast foresees some storms for tomorrow."],["B2","entraîner","v","초래하다; 훈련시키다","Cette décision va *entraîner* des problèmes.","이 결정은 문제를 초래할 거예요.","to lead to, to cause; to train","cf. train","This decision goes to entail some problems. (= This decision will cause problems.)"],["B2","contribuer","v","기여하다","Chacun peut *contribuer* au projet.","누구나 프로젝트에 기여할 수 있어요.","to contribute","","Each-one can contribute to the project."],["B2","remettre en question","expr","재검토하다, 의문을 제기하다","Il faut *remettre en question* nos habitudes.","우리 습관을 다시 돌아봐야 해요.","to call into question","lit. \"to put back in question\"","It must put back in question our habits. (= We need to rethink our habits.)"],["B2","s'engager","v","약속하다; 참여하다","Je *m'engage* à finir le travail avant vendredi.","금요일 전에 일을 끝내겠다고 약속할게요.","to commit (oneself), to pledge","cf. engage","I engage myself to finish the work before Friday. (= I promise to finish by Friday.)"],["B2","tenir compte de","expr","~을 고려하다","Il faut *tenir compte de* son avis.","그의 의견을 고려해야 해요.","to take into account","lit. \"to hold account of\"","It must hold account of his opinion. (= We must take his opinion into account.)"],["B2","se méfier","v","경계하다, 의심하다","*Méfie-toi* des inconnus.","모르는 사람을 조심해.","to be wary of, to distrust","lit. \"to mis-trust\"","Mistrust-yourself of the unknowns. (= Beware of strangers.)"],["B2","s'apercevoir","v","알아차리다","Il *s'est aperçu* qu'il avait oublié son passeport.","그는 여권을 두고 온 걸 알아차렸어요.","to notice, to realize","cf. perceive","He himself perceived that he had forgotten his passport. (= He realized he'd forgotten his passport.)"],["B2","parvenir","v","도달하다, 해내다","Nous sommes *parvenus* à un accord.","우리는 합의에 이르렀어요.","to reach, to manage (to)","cf. parvenu","We are come-through to an agreement. (= We reached an agreement.)"],["B2","atteindre","v","도달하다, 달성하다","Elle a *atteint* son objectif.","그녀는 목표를 달성했어요.","to reach, to attain","cf. attain","She has attained her objective."],["B2","exiger","v","요구하다","Ce poste *exige* beaucoup de patience.","이 직책은 많은 인내심을 요구해요.","to demand, to require","cf. exigent","This post demands a lot of patience."],["B2","négliger","v","소홀히 하다","Ne *néglige* pas ta santé.","건강을 소홀히 하지 마.","to neglect","","Neglect not your health. (= Don't neglect your health.)"],["B2","soutenir","v","지지하다; 주장하다","Mes parents me *soutiennent* toujours.","부모님은 항상 저를 지지해 주세요.","to support; to maintain","cf. sustain","My parents me sustain always. (= My parents always support me.)"],["B2","convaincre","v","설득하다, 납득시키다","Il m'a *convaincu* de venir.","그의 설득에 넘어가 오게 됐어요.","to convince","","He has me convinced to come. (= He talked me into coming.)"],["B2","nuire","v","해를 끼치다","Le tabac *nuit* à la santé.","담배는 건강에 해로워요.","to harm","cf. nuisance","The tobacco harms to the health. (= Smoking is bad for your health.)"],["B2","favoriser","v","촉진하다, 유리하게 하다","Le sport *favorise* le sommeil.","운동은 숙면에 도움이 돼요.","to promote, to favor","cf. favor","The sport favors the sleep. (= Exercise helps you sleep.)"],["B2","aggraver","v","악화시키다","Le stress *aggrave* la situation.","스트레스가 상황을 악화시켜요.","to make worse","cf. aggravate","The stress aggravates the situation."],["B2","susciter","v","불러일으키다","Ce film a *suscité* un grand débat.","이 영화는 큰 논쟁을 불러일으켰어요.","to arouse, to spark","","This film has aroused a great debate."],["B2","s'efforcer","v","애쓰다, 노력하다","Je *m'efforce* d'être patient.","인내심을 가지려고 애써요.","to strive","lit. \"to force oneself\", cf. effort","I force myself to be patient. (= I try hard to be patient.)"],["B2","renoncer","v","포기하다, 단념하다","Il a *renoncé* à son projet.","그는 계획을 포기했어요.","to give up","cf. renounce","He has renounced his project. (= He gave up his plan.)"],["B2","hésiter","v","망설이다","N'*hésitez* pas à me contacter.","주저하지 말고 연락 주세요.","to hesitate","","Hesitate not to contact me. (= Don't hesitate to contact me.)"],["B2","se rendre","v","가다; 항복하다","Je *me rends* à Lyon pour affaires.","출장으로 리옹에 가요.","to go (to); to surrender","lit. \"to render oneself\"","I render myself to Lyon for business. (= I'm going to Lyon on business.)"],["B2","mettre en place","expr","도입하다, 시행하다","L'entreprise a *mis en place* le télétravail.","회사는 재택근무를 도입했어요.","to set up, to implement","lit. \"to put in place\"","The company has put in place the telework. (= The company introduced remote work.)"],["B2","faire face à","expr","~에 맞서다, 직면하다","Nous devons *faire face à* la crise.","우리는 위기에 맞서야 해요.","to face, to cope with","lit. \"to make face to\"","We must make face to the crisis. (= We must face the crisis.)"],["B2","avoir lieu","expr","개최되다, 일어나다","Le concert *aura lieu* samedi.","콘서트는 토요일에 열려요.","to take place","lit. \"to have place\", cf. in lieu of","The concert will have place Saturday. (= The concert takes place on Saturday.)"],["B2","l'enjeu","nm","쟁점, 걸린 것","C'est un *enjeu* majeur pour l'avenir.","미래를 위한 중대한 쟁점이에요.","stake, issue","lit. \"the in-game\"","It's a stake major for the future. (= It's a major issue for the future.)"],["B2","le défi","nm","도전, 과제","Apprendre une langue est un vrai *défi*.","언어를 배우는 건 진짜 도전이에요.","challenge","cf. defy","To learn a language is a true challenge."],["B2","la hausse","nf","상승, 인상","On observe une *hausse* du chômage.","실업률이 오르고 있어요.","rise, increase","","One observes a rise of the unemployment. (= Unemployment is rising.)"],["B2","la baisse","nf","하락, 감소","Les ventes sont en *baisse*.","판매가 감소하고 있어요.","fall, decrease","","The sales are in fall. (= Sales are dropping.)"],["B2","le chômage","nm","실업","Le taux de *chômage* a baissé.","실업률이 떨어졌어요.","unemployment","","The rate of unemployment has lowered. (= The unemployment rate has fallen.)"],["B2","la croissance","nf","성장","La *croissance* économique ralentit.","경제 성장이 둔화되고 있어요.","growth","cf. crescent, increase","The growth economic slows down. (= Economic growth is slowing.)"],["B2","le domaine","nm","분야, 영역","Elle est experte dans ce *domaine*.","그녀는 이 분야의 전문가예요.","field, area","cf. domain","She is expert in this domain."],["B2","la démarche","nf","절차; 접근 방식","Les *démarches* administratives sont longues.","행정 절차가 오래 걸려요.","procedure; approach","","The procedures administrative are long. (= Paperwork takes a long time.)"],["B2","le témoignage","nm","증언","Son *témoignage* est essentiel.","그의 증언은 매우 중요해요.","testimony","cf. testimony","His testimony is essential."],["B2","la tendance","nf","경향, 추세","C'est une *tendance* actuelle.","요즘 추세예요.","trend, tendency","cf. tendency","It's a tendency current. (= It's a current trend.)"],["B2","le comportement","nm","행동, 태도","Son *comportement* est bizarre.","그의 행동이 이상해요.","behavior","cf. comportment","His behavior is bizarre."],["B2","l'inconvénient","nm","단점, 불편","Le seul *inconvénient*, c'est le prix.","유일한 단점은 가격이에요.","drawback","cf. inconvenience","The only inconvenience, it's the price. (= The only downside is the price.)"],["B2","l'avantage","nm","장점, 이점","Le télétravail a beaucoup d'*avantages*.","재택근무는 장점이 많아요.","advantage","","The telework has a lot of advantages."],["B2","le débat","nm","토론, 논쟁","Le *débat* était très animé.","토론이 매우 활발했어요.","debate","","The debate was very animated."],["B2","la conséquence","nf","결과, 영향","Il faut assumer les *conséquences*.","결과를 감수해야 해요.","consequence","","It must assume the consequences. (= You have to face the consequences.)"],["B2","le but","nm","목표, 목적","Quel est le *but* de ce projet ?","이 프로젝트의 목표가 뭐예요?","goal, aim","cf. butt (target)","What is the goal of this project?"],["B2","l'outil","nm","도구","C'est un *outil* très utile.","아주 유용한 도구예요.","tool","","It's a tool very useful. (= It's a very useful tool.)"],["B2","la mesure","nf","조치; 측정","Le gouvernement a pris des *mesures*.","정부가 조치를 취했어요.","measure (step); measurement","cf. measure","The government has taken some measures."],["B2","le niveau de vie","nm","생활 수준","Le *niveau de vie* a augmenté.","생활 수준이 높아졌어요.","standard of living","lit. \"level of life\"","The level of life has increased."],["B2","la recherche","nf","연구; 검색","Il travaille dans la *recherche* médicale.","그는 의학 연구 분야에서 일해요.","research; search","cf. research","He works in the research medical. (= He works in medical research.)"],["B2","le manque","nm","부족, 결핍","Le *manque* de sommeil est dangereux.","수면 부족은 위험해요.","lack","","The lack of sleep is dangerous."],["B2","l'échec","nm","실패","L'*échec* fait partie de l'apprentissage.","실패는 배움의 일부예요.","failure","cf. check(mate)","The failure makes part of the learning. (= Failure is part of learning.)"],["B2","la réussite","nf","성공","Sa *réussite* est impressionnante.","그의 성공은 인상적이에요.","success","","His success is impressive."],["B2","l'esprit","nm","정신, 마음","Il a l'*esprit* ouvert.","그는 열린 마음을 가졌어요.","mind, spirit","cf. spirit, esprit","He has the spirit open. (= He's open-minded.)"],["B2","la confiance","nf","신뢰; 자신감","J'ai *confiance* en toi.","난 너를 믿어.","trust, confidence","cf. confidence","I have confidence in you. (= I trust you.)"],["B2","le malentendu","nm","오해","C'est un simple *malentendu*.","단순한 오해예요.","misunderstanding","lit. \"badly heard\"","It's a simple misunderstanding."],["B2","le délai","nm","기한, 소요 기간","Le *délai* de livraison est de trois jours.","배송 기간은 3일이에요.","time limit, lead time","≠ delay","The delay of delivery is of three days. (= Delivery takes three days.)"],["B2","la facture","nf","청구서, 계산서","Je n'ai pas encore payé la *facture*.","아직 청구서 금액을 안 냈어요.","bill, invoice","","I have not yet paid the invoice."],["B2","l'impôt","nm","세금","Les *impôts* ont augmenté cette année.","올해 세금이 올랐어요.","tax","cf. impose","The taxes have increased this year."],["B2","le citoyen","nm","시민","Chaque *citoyen* a le droit de voter.","모든 시민은 투표권이 있어요.","citizen","cf. citizen","Each citizen has the right to vote."],["B2","efficace","adj","효과적인, 효율적인","Ce médicament est très *efficace*.","이 약은 아주 잘 들어요.","effective, efficient","cf. efficacious","This medicine is very effective."],["B2","précis","adj","정확한, 구체적인","Tu peux être plus *précis* ?","좀 더 구체적으로 말해 줄래?","precise, specific","cf. precise","You can be more precise?"],["B2","évident","adj","명백한, 당연한","C'est *évident* !","당연하지!","obvious","cf. evident","It's evident! (= Obviously!)"],["B2","indispensable","adj","필수적인","Un dictionnaire est *indispensable*.","사전은 필수예요.","essential","","A dictionary is indispensable."],["B2","durable","adj","지속 가능한, 오래가는","Il faut un développement *durable*.","지속 가능한 발전이 필요해요.","sustainable; lasting","cf. durable","It must a development durable. (= We need sustainable development.)"],["B2","inattendu","adj","예상치 못한","C'est une visite *inattendue*.","예상치 못한 방문이네요.","unexpected","lit. \"un-awaited\"","It's a visit unexpected. (= What an unexpected visit.)"],["B2","fiable","adj","믿을 만한","Cette source n'est pas *fiable*.","이 출처는 믿을 만하지 않아요.","reliable","","This source is not reliable."],["B2","ambitieux","adj","야심 찬","C'est un projet *ambitieux*.","야심 찬 프로젝트예요.","ambitious","","It's a project ambitious."],["B2","épuisé","adj","기진맥진한","Je suis complètement *épuisé*.","완전히 녹초가 됐어요.","exhausted; sold out","cf. exhausted","I am completely exhausted."],["B2","bouleversé","adj","충격받은, 마음이 뒤흔들린","Elle était *bouleversée* par la nouvelle.","그녀는 그 소식에 큰 충격을 받았어요.","shaken, devastated","lit. \"overturned\"","She was overturned by the news. (= She was devastated by the news.)"],["B2","susceptible","adj","예민한; ~할 가능성이 있는","Il est très *susceptible*.","그는 아주 예민해요. (쉽게 기분 상해요)","touchy; likely to","≠ susceptible","He is very touchy."],["B2","éventuel","adj","있을 수 있는, 만일의 (≠ 최종의)","En cas de problème *éventuel*, appelez-moi.","혹시 문제가 생기면 전화 주세요.","possible, potential","≠ eventual","In case of problem eventual, call me. (= If any problem comes up, call me.)"],["B2","complexe","adj","복잡한","La situation est plus *complexe* qu'on ne le pense.","상황은 생각보다 복잡해요.","complex","","The situation is more complex than one (not) it thinks. (= It's more complex than you'd think.)"],["B2","incroyable","adj","믿을 수 없는, 놀라운","C'est une histoire *incroyable* !","믿기 힘든 이야기예요!","incredible, unbelievable","cf. incredible","It's a story incredible!"],["B2","cependant","adv","그러나","Le projet est intéressant ; *cependant*, il coûte cher.","프로젝트는 흥미롭지만 비용이 많이 들어요.","however","","The project is interesting; however, it costs dear. (= it's expensive)"],["B2","néanmoins","adv","그럼에도 불구하고","C'est difficile, *néanmoins* c'est possible.","어렵지만 그래도 가능해요.","nevertheless","lit. \"nothing less\"","It's difficult, nevertheless it's possible."],["B2","en revanche","adv","반면에","Il est timide ; *en revanche*, sa sœur est très bavarde.","그는 수줍음이 많아요. 반면 그의 누나는 아주 수다스러워요.","on the other hand","lit. \"in revenge\"","He is shy; on the other hand, his sister is very talkative."],["B2","par conséquent","adv","따라서, 그 결과","Il a plu ; *par conséquent*, le match est annulé.","비가 와서 경기가 취소됐어요.","consequently","cf. consequently","It has rained; consequently, the match is cancelled."],["B2","en effet","adv","실제로, 사실","Il était malade ; *en effet*, il avait de la fièvre.","그는 아팠어요. 실제로 열이 났거든요.","indeed","lit. \"in effect\"","He was sick; indeed, he had some fever."],["B2","désormais","adv","이제부터, 앞으로는","*Désormais*, les magasins ferment à vingt heures.","이제부터 상점들은 8시에 문을 닫아요.","from now on","","From now on, the shops close at twenty hours. (= at 8 p.m.)"],["B2","notamment","adv","특히, 그중에서도","J'aime les sports d'hiver, *notamment* le ski.","겨울 스포츠, 특히 스키를 좋아해요.","notably, in particular","cf. notably","I love the sports of winter, notably the ski."],["B2","auparavant","adv","이전에, 예전에","*Auparavant*, il vivait à Marseille.","예전에 그는 마르세유에 살았어요.","previously, before","","Previously, he lived in Marseille."],["B2","actuellement","adv","현재 (≠ 실제로)","*Actuellement*, je suis au chômage.","현재 저는 실직 상태예요.","currently, at present","≠ actually","Currently, I am at the unemployment. (= I'm currently out of work.)"],["B2","éventuellement","adv","경우에 따라, 혹시 (≠ 결국)","On pourrait *éventuellement* partir plus tôt.","경우에 따라 좀 더 일찍 떠날 수도 있어요.","possibly, if need be","≠ eventually","One could possibly leave more early. (= We could possibly leave earlier.)"],["B2","à condition que","conj","~라는 조건으로 (+접속법)","Je viendrai *à condition que* tu sois là.","네가 있다면 갈게.","provided that (+ subjunctive)","lit. \"on condition that\"","I will come on condition that you be there."],["B2","afin de","prep","~하기 위해","Il travaille dur *afin de* réussir.","그는 성공하기 위해 열심히 일해요.","in order to","","He works hard in order to succeed."],["B2","au lieu de","prep","~ 대신에","Prends le train *au lieu de* la voiture.","차 대신 기차를 타.","instead of","cf. in lieu of","Take the train in lieu of the car."],["B2","quant à","prep","~에 관해서는","*Quant à* moi, je reste ici.","나로 말하자면, 여기 남을게.","as for","","As for me, I stay here."],["B2","à moins que","conj","~하지 않는 한 (+접속법)","On sortira, *à moins qu'*il ne pleuve.","비가 오지 않는 한 나갈 거예요.","unless (+ subjunctive)","lit. \"at less that\"","One will go out, unless it (not) rain. (= We'll go out unless it rains.)"],["B2","avoir du mal à","expr","~하기 어렵다","J'*ai du mal à* comprendre l'accent du sud.","남부 억양은 알아듣기 힘들어요.","to have trouble (doing)","lit. \"to have some bad at\"","I have some bad at understanding the accent of the south. (= I struggle with the southern accent.)"]];
+
+/* ---------- data ---------- */
+function hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); }
+const WORDS = RAW.map(([lv, fr, pos, ko, ex, exko, en, note, exen]) => ({ id: hash(fr), lv, fr, pos, ko, ex, exko, en, note, exen }));
+const BY_ID = Object.fromEntries(WORDS.map(w => [w.id, w]));
+const LEVELS = [
+  { k: 'A1', name: '입문', desc: '인사, 기본 동사, 가족·음식·시간' },
+  { k: 'A2', name: '초급', desc: '여행, 쇼핑, 일상 활동' },
+  { k: 'B1', name: '중급', desc: '의견, 감정, 연결어' },
+  { k: 'B2', name: '중상급', desc: '논리 전개, 사회·업무 어휘' }
+];
+const POS = { v: ['v.', '동사'], nm: ['n.m.', '남성 명사'], nf: ['n.f.', '여성 명사'], nmf: ['n.', '남녀 공용 명사'], nmpl: ['n.m.pl.', '남성 복수 명사'], nfpl: ['n.f.pl.', '여성 복수 명사'], adj: ['adj.', '형용사'], adv: ['adv.', '부사'], prep: ['prép.', '전치사'], conj: ['conj.', '접속사'], pron: ['pron.', '대명사'], interj: ['interj.', '감탄사'], expr: ['loc.', '관용 표현'] };
+const INTERVALS = [0, 1, 2, 4, 8, 16, 32];
+const MASTER_BOX = 5;
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function today() { const d = new Date(); return Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000); }
+function dayKey(n) { return new Date(n * 86400000).toISOString().slice(0, 10); }
+const posGroup = p => p === 'v' ? 'v' : p[0] === 'n' ? 'n' : p === 'adj' ? 'adj' : 'x';
+const genderCls = p => p === 'nm' || p === 'nmpl' ? 'masc' : p === 'nf' || p === 'nfpl' ? 'fem' : '';
+const posTag = p => `<span class="pos ${genderCls(p)}" title="${POS[p][1]}">${POS[p][0]}</span>`;
+const exHTML = w => esc(w.ex).replace(/\*(.+?)\*/, '<mark>$1</mark>');
+const exPlain = w => w.ex.replace(/\*/g, '');
+const clozeHTML = w => esc(w.ex).replace(/\*(.+?)\*/, '<span class="blank" aria-label="빈칸">&nbsp;</span>');
+const speakForm = w => w.fr.replace('le/la ', '');
+const showEn = () => state.settings.en !== false;
+function noteHTML(w) {
+  if (!w.note) return '';
+  const ff = w.note.startsWith('≠');
+  return `<span class="ety${ff ? ' ff' : ''}">${ff ? '뜻이 다른 단어 ' : ''}${esc(w.note)}</span>`;
+}
+const enHTML = w => showEn() ? `<div class="en"><span class="en-g">${esc(w.en)}</span>${noteHTML(w)}</div>` : '';
+function exampleHTML(w) {
+  return `<div class="example"><div class="exfr"><span>${exHTML(w)}</span>${miniSpk(exPlain(w))}</div><div class="exko">${esc(w.exko)}</div>${showEn() ? `<div class="exen"><span class="lbl">직역</span><span>${esc(w.exen)}</span></div>` : ''}</div>`;
+}
+const ICON_SPK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+
+/* ---------- speech ---------- */
+const canSpeak = 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined';
+let frVoice = null;
+function pickVoice() { try { const vs = speechSynthesis.getVoices(); frVoice = vs.find(v => v.lang === 'fr-FR' && /premium|enhanced|amélie|thomas/i.test(v.name)) || vs.find(v => v.lang === 'fr-FR') || vs.find(v => /^fr/i.test(v.lang)) || null; } catch (e) { } }
+if (canSpeak) { pickVoice(); try { speechSynthesis.onvoiceschanged = pickVoice; } catch (e) { } }
+function speak(text) {
+  if (!canSpeak) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'fr-FR'; if (frVoice) u.voice = frVoice; u.rate = 0.92; speechSynthesis.speak(u); } catch (e) { }
+}
+const spkBtn = (text, label) => canSpeak ? `<button class="speak" data-speak="${esc(text)}" aria-label="발음 듣기">${ICON_SPK}${label || '발음'}</button>` : '';
+const miniSpk = text => canSpeak ? `<button class="mini-speak" data-speak="${esc(text)}" aria-label="예문 듣기">${ICON_SPK}</button>` : '';
+
+/* ---------- state & persistence ---------- */
+const LS_KEY = 'carnet-de-mots-v1';
+function blank() { return { v: 1, updatedAt: 0, words: {}, days: {}, tests: [], settings: { daily: 10, loose: true, auto: false, en: true } }; }
+function normalizeState(s) { const b = blank(); if (!s || typeof s !== 'object') return b; return { ...b, ...s, words: s.words || {}, days: s.days || {}, tests: s.tests || [], settings: { ...b.settings, ...(s.settings || {}) } }; }
+let state = blank();
+try { const raw = localStorage.getItem(LS_KEY); if (raw) state = normalizeState(JSON.parse(raw)); } catch (e) { }
+
+function save() {
+  state.updatedAt = Date.now();
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) { toast('저장 공간에 쓸 수 없어요. 비공개 브라우징이면 일반 모드로 열어 주세요.'); }
+}
+async function exportBackup() {
+  const name = `carnet-de-mots-${dayKey(today())}.json`;
+  const blob = new Blob([JSON.stringify(state)], { type: 'application/json' });
+  try {
+    const file = new File([blob], name, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: '학습 기록 백업' }); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function importBackup(file) {
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const data = JSON.parse(r.result);
+      if (!data || typeof data.words !== 'object') throw new Error('bad');
+      state = normalizeState(data); save(); renderAll(); closeSheet();
+      toast(`기록을 불러왔어요 · 학습한 단어 ${Object.values(state.words).filter(x => x.b).length}개`);
+    } catch (e) { toast('이 파일은 학습 기록 백업이 아니에요.'); }
+  };
+  r.readAsText(file);
+}
+
+/* ---------- SRS ---------- */
+const rec = id => state.words[id];
+function statusOf(id) { const r = rec(id); if (!r || !r.b) return 'n'; return r.b >= MASTER_BOX ? 'm' : 'l'; }
+function isDue(id, t) { const r = rec(id); return !!(r && r.b && r.d <= t); }
+function bump() { const k = dayKey(today()); state.days[k] = (state.days[k] || 0) + 1; const keys = Object.keys(state.days).sort(); while (keys.length > 90) delete state.days[keys.shift()]; }
+function markLearned(id) { const t = today(); const r = state.words[id] || { c: 0, w: 0 }; if (!r.b) { r.b = 1; r.d = t + 1; } r.s = t; state.words[id] = r; }
+function reviewAnswer(id, ok) {
+  const t = today(); const r = state.words[id] || { b: 1, d: t, c: 0, w: 0 };
+  if (ok) { r.b = Math.min((r.b || 1) + 1, 6); r.d = t + INTERVALS[r.b]; r.c = (r.c || 0) + 1; }
+  else { r.b = 1; r.d = t + 1; r.w = (r.w || 0) + 1; }
+  r.s = t; state.words[id] = r;
+}
+function testAnswer(id, ok) {
+  const t = today(); const r = state.words[id] || { c: 0, w: 0 };
+  if (ok) r.c = (r.c || 0) + 1;
+  else { r.w = (r.w || 0) + 1; r.b = 1; r.d = t; }
+  r.s = t; state.words[id] = r;
+}
+function streak() {
+  const t = today(); let n = 0; let d = state.days[dayKey(t)] ? t : t - 1;
+  while (state.days[dayKey(d)]) { n++; d--; }
+  return n;
+}
+
+/* ---------- tabs ---------- */
+let currentTab = 'learn';
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('[data-tab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
+  ['learn', 'review', 'test', 'words'].forEach(k => { $('#tab-' + k).hidden = k !== tab; });
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+
+/* ---------- render: learn ---------- */
+function levelStats(lv) {
+  const ws = WORDS.filter(w => !lv || w.lv === lv); let m = 0, l = 0;
+  ws.forEach(w => { const s = statusOf(w.id); if (s === 'm') m++; else if (s === 'l') l++; });
+  return { total: ws.length, m, l, n: ws.length - m - l };
+}
+function renderLearn() {
+  const t = today(); const due = WORDS.filter(w => isDue(w.id, t)).length;
+  $('#dueNum').textContent = due;
+  const done = state.days[dayKey(t)] || 0;
+  $('#todayDone').textContent = done ? `· 오늘 ${done}번 학습함` : '';
+  $('#levels').innerHTML = LEVELS.map(L => {
+    const s = levelStats(L.k); const daily = Math.min(state.settings.daily, s.n);
+    return `<article class="card level">
+      <div class="lv-head"><span class="lv-code">${L.k}</span>
+        <div><div class="lv-name">${L.name}</div><div class="lv-sub">${L.desc}<br><span class="num">${s.total}</span>단어 · 학습 <span class="num">${s.l + s.m}</span> · 암기 <span class="num">${s.m}</span></div></div></div>
+      <div class="bar" role="img" aria-label="암기 ${s.m}, 학습 중 ${s.l}, 새 단어 ${s.n}"><i class="m" style="width:${s.m / s.total * 100}%"></i><i class="l" style="width:${s.l / s.total * 100}%"></i></div>
+      <div class="lv-actions">
+        <button class="btn primary" data-learn="${L.k}" ${daily ? '' : 'disabled'}>${daily ? `새 단어 ${daily}개 학습` : '새 단어를 모두 익혔어요'}</button>
+        <button class="btn ghost" data-testlv="${L.k}">테스트</button>
+      </div></article>`;
+  }).join('');
+}
+
+/* ---------- render: review ---------- */
+function renderReview() {
+  const t = today(); const due = WORDS.filter(w => isDue(w.id, t));
+  $('#revDue').textContent = due.length;
+  $('#revByLevel').innerHTML = LEVELS.map(L => `<span class="due-pill">${L.k} <b>${due.filter(w => w.lv === L.k).length}</b></span>`).join('');
+  const btn = $('#startReview'); btn.disabled = !due.length;
+  btn.textContent = due.length ? `복습 시작 · ${Math.min(due.length, 50)}개` : '복습할 단어가 없어요';
+  let hint = '';
+  if (!due.length) {
+    let next = null; WORDS.forEach(w => { const r = rec(w.id); if (r && r.b && (next === null || r.d < next)) next = r.d; });
+    hint = next === null ? '학습 탭에서 새 단어를 익히면 다음 날부터 복습할 수 있어요.' : `다음 복습은 ${next - t === 1 ? '내일' : (next - t) + '일 후'}이에요.`;
+  } else if (due.length > 50) hint = '한 번에 50개까지 복습해요. 끝나면 이어서 시작할 수 있어요.';
+  $('#revHint').textContent = hint;
+  const counts = [1, 2, 3, 4, 5, 6].map(b => WORDS.filter(w => (rec(w.id) || {}).b === b).length);
+  const max = Math.max(1, ...counts);
+  $('#boxChart').innerHTML = counts.map(c => `<div class="box-col"><span class="v">${c}</span><div class="b" style="height:${Math.max(2, c / max * 100)}px"></div></div>`).join('');
+  $('#boxAxis').innerHTML = [1, 2, 3, 4, 5, 6].map(b => `<div><b>${b}</b>${INTERVALS[b]}일</div>`).join('');
+  const wk = ['일', '월', '화', '수', '목', '금', '토'];
+  $('#upcoming').innerHTML = [0, 1, 2, 3, 4, 5, 6].map(i => {
+    const d = t + i; const n = WORDS.filter(w => { const r = rec(w.id); return r && r.b && (i === 0 ? r.d <= d : r.d === d); }).length;
+    const label = i === 0 ? '오늘' : i === 1 ? '내일' : wk[new Date(d * 86400000).getUTCDay()];
+    return `<div class="up-day ${n ? 'has' : ''}"><div class="d">${label}</div><div class="n">${n}</div></div>`;
+  }).join('');
+}
+
+/* ---------- render: test ---------- */
+let tLevel = 'A1';
+function renderTest() {
+  $('#tLevel').innerHTML = [...LEVELS.map(L => L.k), 'ALL'].map(k => `<input type="radio" name="tLevel" id="tLevel${k}" value="${k}" ${k === tLevel ? 'checked' : ''}><label for="tLevel${k}">${k === 'ALL' ? '전체' : k}</label>`).join('');
+  updatePoolHint();
+  const h = state.tests.slice().reverse().slice(0, 8);
+  $('#history').innerHTML = h.length ? h.map(r => {
+    const d = new Date(r.t); const when = `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    return `<div class="hist-row"><span class="when num">${when}</span><span class="what">${r.lv === 'ALL' ? '전체' : r.lv} · ${TYPE_NAME[r.type] || ''} · ${r.n}문항</span><span class="score">${r.score}/${r.n}</span></div>`;
+  }).join('') : '<div class="empty">아직 본 테스트가 없어요.</div>';
+}
+function testPool() {
+  const scope = document.querySelector('input[name="tScope"]:checked').value;
+  return WORDS.filter(w => (tLevel === 'ALL' || w.lv === tLevel) && (scope === 'all' || statusOf(w.id) !== 'n'));
+}
+function updatePoolHint() {
+  const n = testPool().length;
+  $('#tPoolHint').textContent = n ? `출제 가능한 단어 ${n}개` : '아직 학습한 단어가 없어요. 범위를 ‘레벨 전체’로 바꾸거나 먼저 학습해 주세요.';
+  $('#startTest').disabled = !n;
+}
+$('#tab-test').addEventListener('change', e => { if (e.target.name === 'tLevel') tLevel = e.target.value; updatePoolHint(); });
+
+/* ---------- render: words ---------- */
+let wLevel = 'ALL', wStatus = 'all';
+function renderWordFilters() {
+  const lv = [['ALL', '전체'], ...LEVELS.map(L => [L.k, L.k])];
+  const st = [['all', '모든 상태'], ['n', '새 단어'], ['l', '학습 중'], ['m', '암기 완료']];
+  $('#wFilters').innerHTML = lv.map(([k, t]) => `<button data-wl="${k}" aria-pressed="${k === wLevel}">${t}</button>`).join('') + '<span class="sep"></span>' + st.map(([k, t]) => `<button data-ws="${k}" aria-pressed="${k === wStatus}">${t}</button>`).join('');
+}
+function looseNorm(s) { return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/œ/g, 'oe').replace(/[’`´]/g, "'"); }
+function renderWords() {
+  const q = looseNorm($('#wq').value.trim());
+  const list = WORDS.filter(w => (wLevel === 'ALL' || w.lv === wLevel) && (wStatus === 'all' || statusOf(w.id) === wStatus) && (!q || looseNorm(w.fr).includes(q) || w.ko.includes($('#wq').value.trim()) || w.en.toLowerCase().includes(q)));
+  $('#wCount').textContent = `${list.length}개 단어`;
+  $('#wList').innerHTML = list.length ? list.map(w => `<button class="wrow" data-word="${w.id}"><span class="dot ${statusOf(w.id)}"></span><span class="fr">${esc(w.fr)}</span><span class="ko">${esc(w.ko)}</span></button>`).join('') : '<div class="empty">조건에 맞는 단어가 없어요.</div>';
+}
+$('#wFilters').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.wl) wLevel = b.dataset.wl; if (b.dataset.ws) wStatus = b.dataset.ws;
+  renderWordFilters(); renderWords();
+});
+$('#wq').addEventListener('input', renderWords);
+
+/* ---------- global render ---------- */
+function renderAll() {
+  const t = today(); const due = WORDS.filter(w => isDue(w.id, t)).length;
+  $('#streakNum').textContent = streak();
+  const badge = $('#tabBadge'); badge.hidden = !due; badge.textContent = due > 99 ? '99+' : due;
+  renderLearn(); renderReview(); renderTest(); renderWordFilters(); renderWords();
+}
+
+/* ---------- questions ---------- */
+const TYPE_NAME = { fr2ko: '뜻 고르기', ko2fr: '단어 고르기', cloze: '예문 빈칸', type: '직접 쓰기', mix: '섞어서' };
+const meaningKeys = w => w.ko.replace(/\(.*?\)/g, '').split(/[,;/]/).map(s => s.replace(/[~\s]/g, '')).filter(Boolean);
+function overlaps(a, b) { const ka = meaningKeys(a), kb = meaningKeys(b); return ka.some(k => kb.includes(k)); }
+function distractors(w, n) {
+  const ok = c => c.id !== w.id && !overlaps(w, c);
+  const g = posGroup(w.pos);
+  const tiers = [WORDS.filter(c => c.lv === w.lv && posGroup(c.pos) === g), WORDS.filter(c => posGroup(c.pos) === g), WORDS];
+  const out = [];
+  for (const tier of tiers) { for (const c of shuffle(tier)) { if (out.length >= n) break; if (ok(c) && !out.includes(c) && !out.some(o => o.ko === c.ko || o.fr === c.fr)) out.push(c); } if (out.length >= n) break; }
+  return out;
+}
+function makeQ(w, type) {
+  if (type === 'mix') { const r = Math.random(); type = r < .32 ? 'fr2ko' : r < .6 ? 'ko2fr' : r < .84 ? 'cloze' : 'type'; }
+  const q = { w, type };
+  if (type !== 'type') q.opts = shuffle([w, ...distractors(w, 3)]);
+  return q;
+}
+function normAns(s, loose) {
+  s = s.normalize('NFC').toLowerCase().replace(/[’`´]/g, "'").replace(/\s+/g, ' ').trim().replace(/[.!?]+$/, '');
+  if (loose) s = s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/œ/g, 'oe').replace(/æ/g, 'ae');
+  return s;
+}
+const stripHead = s => s.replace(/^(le\/la |le |la |les |l'|un |une |des )/, '').replace(/^(se |s')/, '');
+function checkTyped(input, w) {
+  const art = s => (s.match(/^(le|la) /) || [])[1];
+  const ia = art(normAns(input, true)), ha = art(normAns(w.fr, true));
+  const match = loose => { const a = normAns(input, loose), b = normAns(w.fr, loose); return a === b || stripHead(a) === stripHead(b); };
+  if (match(true) && ia && ha && ia !== ha) return 'article';
+  if (match(false)) return 'exact';
+  if (match(true)) return 'accent';
+  return 'no';
+}
+
+/* ---------- session engine ---------- */
+let session = null;
+function openSession(s) {
+  session = s; document.body.classList.add('in-session');
+  $('#session').hidden = false; window.scrollTo(0, 0); renderSession();
+}
+function closeSession() {
+  if (canSpeak) try { speechSynthesis.cancel(); } catch (e) { }
+  session = null; document.body.classList.remove('in-session'); $('#session').hidden = true; $('#session').innerHTML = '';
+  renderAll(); window.scrollTo(0, 0);
+}
+const KIND_NAME = { learn: '새 단어 학습', quiz: '확인 퀴즈', review: '복습', test: '테스트' };
+function sessionTop(done, total) {
+  const lv = session.level ? (session.level === 'ALL' ? '전체 · ' : session.level + ' · ') : '';
+  return `<div class="s-top"><button class="icon-btn" data-act="close" aria-label="닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <div class="s-title">${lv}<b>${KIND_NAME[session.kind]}</b></div><span class="chip-stat"><b>${Math.min(done + 1, total)}</b>/ ${total}</span></div>
+    <div class="s-prog"><i style="width:${done / total * 100}%"></i></div>`;
+}
+function renderSession() {
+  const s = session; if (!s) return;
+  const el = $('#session');
+  if (s.kind === 'learn') return renderLearnCard(el);
+  if (s.finished) return renderResult(el);
+  const q = s.queue[s.i];
+  const sub = { fr2ko: '알맞은 뜻을 고르세요', ko2fr: '알맞은 프랑스어를 고르세요', cloze: '빈칸에 들어갈 단어를 기본형으로 고르세요', type: '프랑스어로 써 보세요' }[q.type];
+  let body = `<div class="card qcard"><div class="qtype">${TYPE_NAME[q.type]} · ${sub}</div>`;
+  if (q.type === 'fr2ko') body += `<div class="qprompt-fr">${esc(q.w.fr)}</div><div class="meta" style="display:flex;gap:8px;align-items:center">${posTag(q.w.pos)}${spkBtn(speakForm(q.w))}</div>`;
+  else if (q.type === 'ko2fr') body += `<div class="qprompt-ko">${esc(q.w.ko)}</div><div class="muted" style="font-size:13.5px">${posTag(q.w.pos)} &nbsp;예) ${esc(q.w.exko)}</div>`;
+  else if (q.type === 'cloze') body += `<div class="qsent">${clozeHTML(q.w)}</div><div class="muted" style="font-size:13.5px">${esc(q.w.exko)}</div>`;
+  else body += `<div class="qprompt-ko">${esc(q.w.ko)}</div><div class="muted" style="font-size:13.5px">${posTag(q.w.pos)} &nbsp;예) ${esc(q.w.exko)}</div>`;
+  body += '</div>';
+  if (q.type === 'type') {
+    body += `<div class="type-wrap"><input id="typeIn" type="text" placeholder="프랑스어로 입력 (관사 생략 가능)" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" ${s.answered ? 'disabled' : ''} class="${s.answered ? (s.lastOk ? 'right' : 'wrong') : ''}" value="${esc(s.typed || '')}">
+      ${s.answered ? '' : `<div class="accents">${['é', 'è', 'ê', 'à', 'â', 'ç', 'î', 'ô', 'û', 'ù', 'ë', 'ï', 'œ'].map(c => `<button data-acc="${c}" type="button">${c}</button>`).join('')}</div><button class="btn primary block" data-act="submit">확인</button>`}</div>`;
+  } else {
+    const fr = q.type !== 'fr2ko';
+    body += `<div class="opts">${q.opts.map((o, i) => {
+      let cls = 'opt' + (fr ? ' fr' : '');
+      if (s.answered) { if (o.id === q.w.id) cls += ' right'; else if (o.id === s.picked) cls += ' wrong'; }
+      return `<button class="${cls}" data-opt="${o.id}" ${s.answered ? 'disabled' : ''}><span class="k">${i + 1}</span><span class="t">${esc(fr ? o.fr : o.ko)}</span></button>`;
+    }).join('')}</div>`;
+  }
+  if (s.answered) body += feedbackHTML(q);
+  el.innerHTML = sessionTop(s.i, s.queue.length) + body;
+  if (q.type === 'type' && !s.answered) { const inp = $('#typeIn'); setTimeout(() => { try { inp.focus(); } catch (e) { } }, 30); }
+  if (s.answered) { const nb = el.querySelector('[data-act="next"]'); if (nb) nb.focus({ preventScroll: true }); }
+}
+function feedbackHTML(q) {
+  const s = session; const ok = s.lastOk;
+  const spell = s.artNote ? `<div class="spell">관사가 달라요. 이 단어는 ${POS[q.w.pos][1]}라서 <b>${esc(q.w.fr)}</b>로 써요.</div>` : s.spellNote ? `<div class="spell">철자 확인: 정확한 표기는 <b>${esc(q.w.fr)}</b>예요.</div>` : '';
+  return `<div class="fb">
+    <div class="verdict ${ok ? 'ok' : 'no'}">${ok ? '정답이에요' : '틀렸어요'}</div>
+    <div class="ans"><span class="fr">${esc(q.w.fr)}</span>${posTag(q.w.pos)}<span class="ko">${esc(q.w.ko)}</span>${spkBtn(speakForm(q.w))}</div>${spell}
+    ${enHTML(q.w)}
+    ${exampleHTML(q.w)}
+    <button class="btn primary block" data-act="next">${s.i + 1 >= s.queue.length ? '결과 보기' : '다음'}</button></div>`;
+}
+function answer(ok, extra) {
+  const s = session; const q = s.queue[s.i];
+  s.answered = true; s.lastOk = ok; Object.assign(s, extra || {});
+  if (!s.counted.has(q.w.id)) { s.counted.add(q.w.id); s.results.push({ id: q.w.id, ok }); }
+  if (s.kind === 'review') {
+    if (!s.graded.has(q.w.id)) { s.graded.add(q.w.id); reviewAnswer(q.w.id, ok); }
+    if (!ok && !s.requeued.has(q.w.id)) { s.requeued.add(q.w.id); s.queue.push(makeQ(q.w, q.type === 'type' ? 'fr2ko' : 'mix')); }
+  } else if (s.kind === 'test') testAnswer(q.w.id, ok);
+  else if (s.kind === 'quiz' && !ok) { const r = state.words[q.w.id]; if (r) r.d = today(); }
+  bump(); save(); renderSession();
+  if (state.settings.auto) speak(speakForm(q.w));
+}
+function next() {
+  const s = session; s.i++; s.answered = false; s.picked = null; s.typed = ''; s.spellNote = false; s.artNote = false;
+  if (s.i >= s.queue.length) {
+    s.finished = true;
+    if (s.kind === 'test') { const score = s.results.filter(r => r.ok).length; state.tests.push({ t: Date.now(), lv: s.level, type: s.type, n: s.results.length, score }); state.tests = state.tests.slice(-30); save(); }
+  }
+  renderSession(); window.scrollTo(0, 0);
+}
+function renderResult(el) {
+  const s = session; const total = s.results.length; const ok = s.results.filter(r => r.ok).length;
+  const wrong = s.results.filter(r => !r.ok).map(r => BY_ID[r.id]);
+  const pct = total ? Math.round(ok / total * 100) : 0;
+  const msg = pct === 100 ? 'Parfait ! 모두 맞혔어요.' : pct >= 80 ? 'Très bien ! 거의 다 맞혔어요.' : pct >= 50 ? 'Pas mal ! 틀린 단어만 다시 보면 돼요.' : 'Courage ! 틀린 단어는 복습 목록에 넣어 뒀어요.';
+  const note = s.kind === 'review' ? '맞힌 단어는 다음 상자로 옮겨졌어요.' : s.kind === 'test' ? (wrong.length ? '틀린 단어는 오늘 복습 목록에 추가됐어요.' : '') : s.kind === 'quiz' && wrong.length ? '틀린 단어는 오늘 복습 목록에 추가됐어요.' : '';
+  el.innerHTML = `<div class="s-top"><button class="icon-btn" data-act="close" aria-label="닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="s-title"><b>${KIND_NAME[s.kind]} 결과</b></div></div>
+    <div class="card result"><div class="big">${ok}<span style="font-size:.5em;color:var(--ink-3)"> / ${total}</span></div><div style="font-weight:600;margin-top:6px">${msg}</div><div class="sub">${note}</div></div>
+    ${wrong.length ? `<h2 class="sec">틀린 단어 <span>${wrong.length}개</span></h2><div class="card wlist wrong-list">${wrong.map(w => `<button class="wrow" data-word="${w.id}"><span class="dot l"></span><span class="fr">${esc(w.fr)}</span><span class="ko">${esc(w.ko)}</span></button>`).join('')}</div>` : ''}
+    <div class="end-actions">
+      ${wrong.length ? `<button class="btn accent block" data-act="retry">틀린 단어만 다시 풀기</button>` : ''}
+      <button class="btn primary block" data-act="close">${s.kind === 'test' ? '테스트 탭으로' : '처음으로'}</button>
+    </div>`;
+}
+
+/* ---------- learn (flashcards) ---------- */
+function startLearn(lv) {
+  const fresh = WORDS.filter(w => w.lv === lv && statusOf(w.id) === 'n').slice(0, state.settings.daily);
+  if (!fresh.length) return;
+  openSession({ kind: 'learn', level: lv, cards: fresh.slice(), words: fresh, flipped: false, repeats: {}, doneCount: 0 });
+  if (state.settings.auto) speak(speakForm(fresh[0]));
+}
+function renderLearnCard(el) {
+  const s = session;
+  if (!s.cards.length) {
+    el.innerHTML = `<div class="s-top"><button class="icon-btn" data-act="close" aria-label="닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="s-title">${s.level} · <b>학습 완료</b></div></div>
+      <div class="s-prog"><i style="width:100%"></i></div>
+      <div class="card result"><div class="big">${s.words.length}</div><div style="font-weight:600">새 단어를 익혔어요</div><div class="sub">내일부터 복습 목록에 올라가요. 지금 바로 확인 퀴즈로 기억을 다져 보세요.</div></div>
+      <div class="end-actions"><button class="btn accent block" data-act="quiz">확인 퀴즈 풀기 · ${s.words.length}문항</button><button class="btn primary block" data-act="close">끝내기</button></div>`;
+    return;
+  }
+  const w = s.cards[0]; const total = s.words.length;
+  el.innerHTML = sessionTop(s.doneCount, total) + `
+    <div class="card flash" data-act="flip" role="button" tabindex="0" aria-label="카드 뒤집기">
+      <div class="meta">${posTag(w.pos)}${spkBtn(speakForm(w))}</div>
+      <div class="fr-big">${esc(w.fr)}</div>
+      ${s.flipped ? `<div class="meaning">${esc(w.ko)}</div>
+      ${enHTML(w)}
+      ${exampleHTML(w)}` : `<div class="tap-hint">탭해서 뜻과 예문 보기</div>`}
+    </div>
+    <div class="s-actions">
+      <button class="btn" data-act="again" ${s.flipped ? '' : 'disabled'}>한 번 더 볼래요</button>
+      <button class="btn primary" data-act="know" ${s.flipped ? '' : 'disabled'}>외웠어요</button>
+    </div>`;
+}
+function learnStep(act) {
+  const s = session; const w = s.cards.shift();
+  if (act === 'again') { const pos = Math.min(s.cards.length, 3); s.cards.splice(pos, 0, w); }
+  else { markLearned(w.id); s.doneCount++; bump(); save(); }
+  s.flipped = false; renderSession();
+  if (state.settings.auto && s.cards.length) speak(speakForm(s.cards[0]));
+}
+
+/* ---------- starters ---------- */
+function startQuiz(words, kind, level, type) {
+  const pick = type || 'mix';
+  const queue = shuffle(words).map(w => makeQ(w, kind === 'quiz' ? (pick === 'mix' ? ['fr2ko', 'ko2fr', 'cloze'][Math.floor(Math.random() * 3)] : pick) : pick));
+  openSession({ kind, level, type: pick, queue, i: 0, results: [], counted: new Set(), graded: new Set(), requeued: new Set(), answered: false });
+}
+$('#startReview').addEventListener('click', () => {
+  const t = today();
+  const due = WORDS.filter(w => isDue(w.id, t)).sort((a, b) => rec(a.id).d - rec(b.id).d || rec(a.id).b - rec(b.id).b).slice(0, 50);
+  if (due.length) startQuiz(due, 'review', null, 'mix');
+});
+$('#startTest').addEventListener('click', () => {
+  const pool = testPool(); if (!pool.length) return;
+  const n = +document.querySelector('input[name="tCount"]:checked').value;
+  const type = document.querySelector('input[name="tType"]:checked').value;
+  startQuiz(shuffle(pool).slice(0, n), 'test', tLevel, type);
+});
+document.addEventListener('click', e => {
+  const sp = e.target.closest('[data-speak]'); if (sp) { e.stopPropagation(); speak(sp.dataset.speak); return; }
+  const go = e.target.closest('[data-goto]'); if (go) { setTab(go.dataset.goto); return; }
+  const lb = e.target.closest('[data-learn]'); if (lb) { startLearn(lb.dataset.learn); return; }
+  const tl = e.target.closest('[data-testlv]'); if (tl) { tLevel = tl.dataset.testlv; renderTest(); setTab('test'); return; }
+  const wr = e.target.closest('[data-word]'); if (wr) { openWord(wr.dataset.word); return; }
+  if (!session) return;
+  const acc = e.target.closest('[data-acc]');
+  if (acc) { const inp = $('#typeIn'); const p = inp.selectionStart ?? inp.value.length; inp.value = inp.value.slice(0, p) + acc.dataset.acc + inp.value.slice(inp.selectionEnd ?? p); inp.focus(); inp.setSelectionRange(p + 1, p + 1); return; }
+  const opt = e.target.closest('[data-opt]');
+  if (opt && !session.answered) { const q = session.queue[session.i]; answer(opt.dataset.opt === q.w.id, { picked: opt.dataset.opt }); return; }
+  const a = e.target.closest('[data-act]'); if (!a) return;
+  const act = a.dataset.act;
+  if (act === 'close') closeSession();
+  else if (act === 'flip') { if (!session.flipped) { session.flipped = true; renderSession(); } }
+  else if (act === 'again' || act === 'know') learnStep(act);
+  else if (act === 'quiz') { const ws = session.words; closeSession(); startQuiz(ws, 'quiz', ws[0].lv, 'mix'); }
+  else if (act === 'submit') submitTyped();
+  else if (act === 'next') next();
+  else if (act === 'retry') { const ws = session.results.filter(r => !r.ok).map(r => BY_ID[r.id]); const lv = session.level; closeSession(); startQuiz(ws, 'quiz', lv, 'mix'); }
+});
+function submitTyped() {
+  const s = session; if (!s || s.answered) return;
+  const inp = $('#typeIn'); const v = inp.value; if (!v.trim()) { inp.focus(); return; }
+  const q = s.queue[s.i]; const r = checkTyped(v, q.w);
+  const ok = r === 'exact' || (r === 'accent' && state.settings.loose);
+  answer(ok, { typed: v, spellNote: r === 'accent', artNote: r === 'article' });
+}
+document.addEventListener('keydown', e => {
+  if (!$('#overlay').hidden) { if (e.key === 'Escape') closeSheet(); return; }
+  if (!session) return;
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (e.key === 'Enter' && e.target.id === 'typeIn') { e.preventDefault(); submitTyped(); return; }
+  if (session.kind === 'learn') {
+    if (e.key === ' ' || e.key === 'Enter') { if (tag === 'button' && !e.target.closest('.flash')) return; e.preventDefault(); if (!session.flipped && session.cards.length) { session.flipped = true; renderSession(); } return; }
+    if (session.flipped && e.key === 'ArrowRight') learnStep('know');
+    if (session.flipped && e.key === 'ArrowLeft') learnStep('again');
+    return;
+  }
+  if (tag === 'input') return;
+  if (!session.answered && /^[1-4]$/.test(e.key) && !session.finished) { const b = document.querySelectorAll('[data-opt]')[+e.key - 1]; if (b) b.click(); }
+});
+
+/* ---------- sheet (word detail, settings) ---------- */
+const overlay = $('#overlay'); let downOnOverlay = false;
+overlay.addEventListener('mousedown', e => { downOnOverlay = e.target === overlay; });
+overlay.addEventListener('mouseup', e => { if (downOnOverlay && e.target === overlay) closeSheet(); downOnOverlay = false; });
+overlay.addEventListener('touchstart', e => { downOnOverlay = e.target === overlay; }, { passive: true });
+overlay.addEventListener('touchend', e => { if (downOnOverlay && e.target === overlay) { e.preventDefault(); closeSheet(); } downOnOverlay = false; });
+function openSheet(html) { $('#sheet').innerHTML = '<div class="grab"></div>' + html; overlay.hidden = false; const f = $('#sheet').querySelector('button,input'); if (f) f.focus({ preventScroll: true }); }
+function closeSheet() { overlay.hidden = true; $('#sheet').innerHTML = ''; }
+function openWord(id) {
+  const w = BY_ID[id]; const r = rec(id) || {}; const st = statusOf(id); const t = today();
+  const stName = { n: '새 단어', l: '학습 중', m: '암기 완료' }[st];
+  const dueTxt = !r.b ? '—' : r.d <= t ? '오늘' : r.d - t === 1 ? '내일' : `${r.d - t}일 후`;
+  openSheet(`<div class="stack">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="eyebrow">${w.lv} · ${stName}</span>${posTag(w.pos)}<span class="muted" style="font-size:12px">${POS[w.pos][1]}</span></div>
+    <div class="detail-fr">${esc(w.fr)}</div>
+    <div style="display:flex;gap:8px">${spkBtn(speakForm(w))}</div>
+    <div class="meaning" style="padding-top:12px">${esc(w.ko)}</div>
+    ${enHTML(w)}
+    ${exampleHTML(w)}
+    <div class="detail-stats"><div><small>기억 상자</small><b>${r.b || 0}</b></div><div><small>다음 복습</small><b style="font-family:var(--f-ui);font-size:14px">${dueTxt}</b></div><div><small>정답 / 오답</small><b>${r.c || 0} / ${r.w || 0}</b></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      ${st === 'n' ? `<button class="btn" data-wact="learn" data-id="${id}">학습한 단어로 표시</button>` : `<button class="btn" data-wact="reset" data-id="${id}">새 단어로 되돌리기</button>`}
+      <button class="btn primary" data-wact="close">닫기</button>
+    </div></div>`);
+}
+$('#sheet').addEventListener('click', e => {
+  const b = e.target.closest('[data-wact]'); if (!b) return;
+  const act = b.dataset.wact;
+  if (act === 'close') return closeSheet();
+  if (act === 'learn') { markLearned(b.dataset.id); save(); renderAll(); openWord(b.dataset.id); toast('학습한 단어로 표시했어요'); }
+  if (act === 'reset') { delete state.words[b.dataset.id]; save(); renderAll(); openWord(b.dataset.id); toast('새 단어로 되돌렸어요'); }
+  if (act === 'export') { exportBackup(); return; }
+  if (act === 'daily') { state.settings.daily = +b.dataset.v; save(); renderAll(); openSettings(); }
+  if (act === 'wipe') { if (b.dataset.armed) { const keep = state.settings; state = blank(); state.settings = keep; save(); renderAll(); closeSheet(); toast('학습 기록을 초기화했어요'); } else { b.dataset.armed = '1'; b.textContent = '한 번 더 누르면 모든 기록이 지워져요'; } }
+});
+$('#sheet').addEventListener('change', e => {
+  if (e.target.id === 'importFile' && e.target.files[0]) { importBackup(e.target.files[0]); return; }
+  if (e.target.id === 'setLoose') { state.settings.loose = e.target.checked; save(); }
+  if (e.target.id === 'setAuto') { state.settings.auto = e.target.checked; save(); }
+  if (e.target.id === 'setEn') { state.settings.en = e.target.checked; save(); if (session) renderSession(); }
+});
+function openSettings() {
+  const S = state.settings;
+  openSheet(`<h3>설정</h3>
+    <div class="set-row"><div class="txt">하루 새 단어 수<small>‘새 단어 학습’ 한 번에 익히는 개수</small></div>
+      <div class="seg">${[5, 10, 15, 20].map(n => `<button class="btn" style="min-height:34px;padding:0 11px;${n === S.daily ? 'background:var(--ink);color:var(--bg);border-color:var(--ink)' : ''}" data-wact="daily" data-v="${n}">${n}</button>`).join('')}</div></div>
+    <div class="set-row"><div class="txt">직접 쓰기에서 악상 관대하게 채점<small>é를 e로 써도 정답 처리하고, 바른 철자를 알려 줘요</small></div><label class="switch"><input type="checkbox" id="setLoose" ${S.loose ? 'checked' : ''}><span></span></label></div>
+    <div class="set-row"><div class="txt">영어 뜻과 직역 보기<small>영어 뜻, 같은 어원의 영어 단어, 예문의 단어별 직역을 함께 보여 줘요</small></div><label class="switch"><input type="checkbox" id="setEn" ${S.en !== false ? 'checked' : ''}><span></span></label></div>
+    <div class="set-row"><div class="txt">발음 자동 재생<small>카드를 넘기거나 답을 확인하면 읽어 줘요${canSpeak ? '' : ' (이 브라우저는 음성 합성을 지원하지 않아요)'}</small></div><label class="switch"><input type="checkbox" id="setAuto" ${S.auto ? 'checked' : ''} ${canSpeak ? '' : 'disabled'}><span></span></label></div>
+    <div class="set-row"><div class="txt">학습 기록 백업<small>기록은 이 기기에만 저장돼요. 파일로 내보내서 다른 기기에서 불러올 수 있어요.</small></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <button class="btn" data-wact="export">내보내기</button>
+      <label class="btn" for="importFile" style="cursor:pointer">불러오기</label>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+    </div>
+    <div class="set-row"><div class="txt">학습 기록 초기화<small>기억 상자, 테스트 기록, 연속 학습일이 모두 지워져요</small></div></div>
+    <button class="btn block danger" data-wact="wipe">학습 기록 초기화</button>`);
+}
+$('#openSettings').addEventListener('click', openSettings);
+let toastTimer;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 1800); }
+
+/* ---------- boot ---------- */
+renderAll();
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => { }); });
+}
+})();
+</script>
+</body>
+</html>
