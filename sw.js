@@ -1,6 +1,6 @@
 // Carnet de mots — offline cache.
 // Bump VERSION whenever index.html changes so phones pick up the new copy.
-const VERSION = 'carnet-v1';
+const VERSION = 'carnet-v4';
 const APP_FILES = [
   './',
   './index.html',
